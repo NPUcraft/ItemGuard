@@ -1,0 +1,9 @@
+{
+  "exactArtifactUpgrade": "FAIL",
+  "configCompatibilityUpgrade": "PASS",
+  "upgradeVerification": "CONFIG_ONLY",
+  "unitTests": 82,
+  "singleServerIntegration": "14/14 PASS",
+  "huskSyncIntegration": "HS-001..HS-005 PASS",
+  "notes": "Original published RC1 JAR SHA-256 11581d2fa2a61198a491ef680181f1fc5041e413c54fdbb1f0c54c3d5eeda87b was not available. CONFIG_ONLY is not EXACT_ARTIFACT_UPGRADE."
+}

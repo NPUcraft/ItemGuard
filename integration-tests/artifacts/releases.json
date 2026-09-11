@@ -1,0 +1,7 @@
+{
+  "1.0.0-RC1": {
+    "filename": "ItemGuard-1.0.0-RC1.jar",
+    "sha256": "11581d2fa2a61198a491ef680181f1fc5041e413c54fdbb1f0c54c3d5eeda87b",
+    "notes": "Original published RC1. upgradeIntegrationTest requires this exact checksum. Do not substitute a later workspace build."
+  }
+}

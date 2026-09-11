@@ -1,0 +1,46 @@
+name: ItemGuard
+version: ${version}
+main: dev.itemguard.ItemGuardPlugin
+api-version: '1.21.8'
+author: ItemGuard
+description: ${description}
+softdepend:
+  - HuskSync
+commands:
+  itemguard:
+    description: ItemGuard administration command
+    aliases: [ig]
+    usage: /itemguard help
+permissions:
+  itemguard.admin:
+    description: Grants all ItemGuard administration permissions
+    default: op
+    children:
+      itemguard.status: true
+      itemguard.inspect: true
+      itemguard.trace: true
+      itemguard.scan: true
+      itemguard.alerts: true
+      itemguard.reload: true
+      itemguard.debug: true
+  itemguard.status:
+    description: View ItemGuard status
+    default: op
+  itemguard.inspect:
+    description: Inspect a player's ItemGuard session
+    default: op
+  itemguard.trace:
+    description: View a player's item flow timeline
+    default: op
+  itemguard.scan:
+    description: Scan a player's inventory for illegal or suspicious items
+    default: op
+  itemguard.alerts:
+    description: Receive ItemGuard risk alerts
+    default: op
+  itemguard.reload:
+    description: Reload ItemGuard configuration
+    default: op
+  itemguard.debug:
+    description: View ItemGuard debug information
+    default: op

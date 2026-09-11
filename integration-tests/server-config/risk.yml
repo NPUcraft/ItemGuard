@@ -1,0 +1,58 @@
+# Risk scores are additive and clamped to 0..100. Trusted sources do not subtract risk.
+# Integration overlay: short signal TTL so AUTO-014 does not wait 120 seconds.
+# Product default remains 120000 in src/main/resources/risk.yml.
+
+scores:
+  UNEXPLAINED_ITEM_GAIN: 35
+  HIGH_VALUE_ITEM_BURST: 20
+  RARE_ITEM_BURST: 20
+  REPEATED_IDENTICAL_ITEMS: 15
+  RAPID_ITEM_GAIN: 10
+  SHULKER_HIGH_FLOW: 10
+  SHULKER_RAPID_TRANSFER: 12
+  ILLEGAL_ENCHANTMENT: 40
+  OVER_LEVEL_ENCHANTMENT: 40
+  CONFLICTING_ENCHANTMENTS: 20
+  OVERSIZED_STACK: 45
+  SUSPICIOUS_ATTRIBUTE: 15
+  SUSPICIOUS_COMPONENT: 12
+  COMPONENT_MODIFIED: 4
+  CUSTOM_ITEM_METADATA: 2
+  ABNORMAL_DURABILITY: 25
+  SUSPICIOUS_CONTAINER_CONTENTS: 18
+  CUSTOM_MAX_STACK: 8
+  HUSKSYNC_DATA_APPLY: 0
+  KNOWN_CONTAINER_SOURCE: 0
+  HUSKSYNC_REPEATED_SYNC: 8
+  HUSKSYNC_ROLLBACK_LIKE: 15
+  HUSKSYNC_RAPID_RESTORE: 12
+  DUPLICATE_FINGERPRINT: 25
+
+levels:
+  suspicious: 30
+  high: 60
+  critical: 80
+
+windows:
+  rapid-gain-millis: 1500
+  high-value-burst-millis: 1500
+  repeated-identical-millis: 2000
+  shulker-flow-millis: 2000
+  signal-ttl-millis: 3000
+
+thresholds:
+  rapid-gain-amount: 256
+  high-value-burst-score: 400
+  repeated-identical-amount: 128
+  shulker-high-flow-transfers: 24
+  shulker-rapid-transfer-millis: 750
+  unexplained-min-amount: 1
+
+cooldowns:
+  same-signal-millis: 8000
+  alert-millis: 10000
+
+deduplicate-same-correlation: true
+
+family-caps:
+  custom-metadata: 10

@@ -1,0 +1,12 @@
+name: ItemGuardTestPlugin
+version: 1.0.0-test
+main: dev.itemguard.testplugin.ItemGuardTestPlugin
+api-version: '1.21.8'
+depend:
+  - ItemGuard
+description: Manual runtime acceptance helper. Not shipped with ItemGuard.
+commands:
+  igtest:
+    description: ItemGuard acceptance helpers
+    usage: /igtest <api|illegal|custom|oversized|legal-maxstack|signature|cancel-drop|shulker|bundle> [player]
+    permission: itemguard.admin

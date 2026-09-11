@@ -1,0 +1,63 @@
+prefix: "<dark_gray>[<gold>ItemGuard</gold>]</dark_gray> "
+error-prefix: "<dark_gray>[<red>ItemGuard</red>]</dark_gray> "
+
+no-permission: "<red>You do not have permission to use this command."
+player-only: "<red>This command can only be used by players."
+unknown-player: "<red>Unknown player: <white><player>"
+unknown-subcommand: "<red>Unknown subcommand. Use <white>/ig help</white>."
+invalid-duration: "<red>Invalid duration '<white><input></white>'. Use values like 30s, 5m, or 1h."
+duration-too-large: "<red>Duration exceeds the maximum query window of <white><max></white>."
+invalid-material: "<red>Unknown material: <white><material>"
+reload-success: "<green>Configuration reloaded."
+reload-partial: "<yellow>Configuration reloaded with warnings. Check the console."
+player-offline-session: "<yellow>Player is offline. Showing retained memory data where available."
+
+help-header: "<gold>ItemGuard commands"
+help-line: "<yellow>/ig <command></yellow> <dark_gray>-</dark_gray> <gray><description>"
+
+status-header: "<gold>ItemGuard status"
+inspect-header: "<gold>ItemGuard inspect</gold> <gray><player>"
+trace-header: "<gold>ItemGuard trace</gold> <gray><player> — last <duration>"
+debug-header: "<gold>ItemGuard debug</gold> <gray><player>"
+debug-disclaimer: "<gray>Diagnostic information only. Item NBT, PDC, and secrets are not shown."
+scan-header: "<gold>ItemGuard scan</gold> <gray><player>"
+scan-clean: "<green>No scanner findings on current inventory."
+alerts-header: "<gold>Recent ItemGuard alerts"
+alerts-empty: "<gray>No recent alerts in memory."
+
+flow-gain: "<green>+<amount> <white><material>"
+flow-loss: "<red><amount> <white><material>"
+flow-source-verified: "<gray>↳ <green><source></green> → <white><destination></white> <dark_gray>(verified)"
+flow-source-inferred: "<gray>↳ <yellow><source></yellow> → <white><destination></white> <dark_gray>(inferred)"
+flow-source-inferred-container: "<gray>↳ <yellow><source></yellow> @ <white><location></white> → <white><destination></white> <dark_gray>(inferred)"
+flow-source-unknown: "<gray>↳ <red>UNKNOWN SOURCE ⚠</red> <dark_gray>(<confidence>)"
+flow-source-husksync: "<gray>↳ <aqua>HuskSync Data Apply</aqua> → <white><destination></white> <dark_gray>(trusted external source)"
+flow-source-creative: "<gray>↳ <aqua>CREATIVE_INVENTORY</aqua> → <white><destination></white> <dark_gray>(creative)"
+flow-source-container: "<gray>↳ <yellow><source></yellow> @ <white><location></white> → <white><destination></white> <dark_gray>(verified)"
+flow-source-shulker: "<gray>↳ <light_purple>Shulker Box</light_purple> → <white><destination>"
+
+alert-title: "<red>⚠ ItemGuard Alert"
+alert-body: |-
+  <gray>Player: <white><player></white>
+  Item: <white><item></white>
+  Amount gained: <green>+<amount></green>
+  Time: <white><window></white>
+
+  Source:
+  <white><source></white>
+
+  Risk: <gold><risk></gold><gray>/100</gray>
+
+  Reason:
+  <white><reason></white>
+alert-inspect: "<aqua>[Inspect]"
+alert-trace: "<yellow>[Trace]"
+alert-teleport: "<green>[Teleport]"
+alert-inspect-hover: "Run /ig inspect <player>"
+alert-trace-hover: "Run /ig trace <player> 5m"
+alert-teleport-hover: "Teleport to <player>"
+
+risk-normal: "<green>NORMAL"
+risk-suspicious: "<yellow>SUSPICIOUS"
+risk-high: "<gold>HIGH"
+risk-critical: "<red>CRITICAL"

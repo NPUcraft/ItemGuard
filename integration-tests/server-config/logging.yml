@@ -1,0 +1,24 @@
+# Integration overlay. Flush quickly so JSONL assertions do not wait on the 2s default.
+logging:
+  enabled: true
+  format: JSONL
+  directory: logs
+  server-name: integration
+  retention-days: 30
+  max-file-size-mb: 100
+  flush-interval-seconds: 1
+  timezone: system
+  queue:
+    capacity: 10000
+  categories:
+    alerts: true
+    unknown-gains: true
+    invalid-items: true
+    suspicious-items: true
+    husksync-data-apply: true
+    admin-actions: true
+    high-value-flows: true
+  high-value-flow:
+    minimum-item-value: 30
+  console-warning:
+    queue-drop-warning-interval-seconds: 60

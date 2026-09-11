@@ -1,0 +1,21 @@
+# Admin alert delivery. ItemGuard 1.0 never auto-bans, kicks, deletes, or rolls back.
+# Default bias: alert staff at HIGH (60), never punish automatically.
+
+enabled: true
+threshold: 60
+critical-threshold: 80
+console: true
+admin-chat: true
+broadcast-to-permission: itemguard.alerts
+
+aggregation:
+  enabled: true
+  window-millis: 5000
+
+buttons:
+  inspect: true
+  trace: true
+  teleport: true
+  confiscate: false
+
+trace-duration: 5m

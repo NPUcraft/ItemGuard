@@ -1,0 +1,29 @@
+# Integration overlay. Product default scan-debounce remains 1500ms.
+debug: false
+
+reconciliation:
+  interval-ticks: 20
+  heartbeat-interval-ticks: 40
+  expected-flow-ttl-millis: 2500
+  event-debounce-ticks: 1
+  ignore-creative-inventory-gains: true
+
+trace:
+  retention-minutes: 30
+  max-events-per-player: 2000
+  max-total-events: 100000
+  max-query-duration: 6h
+
+performance:
+  signature-min-value: 20
+  hash-custom-items: true
+  scan-debounce-millis: 50
+  max-scan-depth: 3
+
+session:
+  husksync-timeout-millis: 15000
+  keep-trace-after-quit: true
+
+scanner:
+  enabled: true
+  auto-remove: false

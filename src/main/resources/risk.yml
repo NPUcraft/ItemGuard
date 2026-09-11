@@ -1,0 +1,65 @@
+# Risk scores are additive and clamped to 0..100. Trusted sources do not subtract risk.
+# Active, unexpired signals are summed. Same type+material+correlation is deduplicated.
+# Custom metadata signals (name/lore/PDC/components/max-stack) share family-caps.custom-metadata
+# per correlation so a legal custom item cannot stack past that cap by itself.
+# Unrelated events inside signal-ttl-millis can still add together; that is intentional.
+
+scores:
+  UNEXPLAINED_ITEM_GAIN: 35
+  HIGH_VALUE_ITEM_BURST: 20
+  RARE_ITEM_BURST: 20
+  REPEATED_IDENTICAL_ITEMS: 15
+  RAPID_ITEM_GAIN: 10
+  SHULKER_HIGH_FLOW: 10
+  SHULKER_RAPID_TRANSFER: 12
+  ILLEGAL_ENCHANTMENT: 40
+  OVER_LEVEL_ENCHANTMENT: 40
+  CONFLICTING_ENCHANTMENTS: 20
+  OVERSIZED_STACK: 45
+  SUSPICIOUS_ATTRIBUTE: 15
+  SUSPICIOUS_COMPONENT: 12
+  COMPONENT_MODIFIED: 4
+  CUSTOM_ITEM_METADATA: 2
+  ABNORMAL_DURABILITY: 25
+  SUSPICIOUS_CONTAINER_CONTENTS: 18
+  CUSTOM_MAX_STACK: 8
+  HUSKSYNC_DATA_APPLY: 0
+  KNOWN_CONTAINER_SOURCE: 0
+  # Reserved for 1.1+ cross-server heuristics. Unused in 1.0 detectors.
+  HUSKSYNC_REPEATED_SYNC: 8
+  HUSKSYNC_ROLLBACK_LIKE: 15
+  HUSKSYNC_RAPID_RESTORE: 12
+  DUPLICATE_FINGERPRINT: 25
+
+# high (60) is the default admin-alert threshold. ItemGuard alerts first and never auto-punishes.
+levels:
+  suspicious: 30
+  high: 60
+  critical: 80
+
+windows:
+  rapid-gain-millis: 5000
+  high-value-burst-millis: 10000
+  repeated-identical-millis: 30000
+  shulker-flow-millis: 10000
+  # How long a signal stays in the live score before it expires.
+  signal-ttl-millis: 120000
+
+thresholds:
+  rapid-gain-amount: 256
+  high-value-burst-score: 400
+  repeated-identical-amount: 128
+  shulker-high-flow-transfers: 24
+  shulker-rapid-transfer-millis: 750
+  unexplained-min-amount: 1
+
+cooldowns:
+  same-signal-millis: 8000
+  alert-millis: 10000
+
+deduplicate-same-correlation: true
+
+# Same custom-item facts (name/lore/PDC/components/max-stack) share one cap per correlation.
+family-caps:
+  custom-metadata: 10
+

@@ -1,0 +1,49 @@
+.gradle/
+build/
+out/
+.idea/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+.vscode/
+*.log
+*.class
+hs_err_pid*
+replay_pid*
+.DS_Store
+Thumbs.db
+
+# Local editor / secrets
+.cursor/
+.env
+.env.*
+
+# Local Paper test server created by run-paper / manual setup
+run/*
+!run/README.txt
+runtime-test-plugin/build/
+runtime-test-plugin/.gradle/
+runtime-test-results.md
+
+# Integration test runtime (Paper worlds, bot deps, generated reports)
+integration-tests/bot/node_modules/
+integration-tests/reports/
+!integration-tests/reports/.gitkeep
+integration-tests/runtime-temp/
+integration-tests/harness/build/
+integration-tests/harness/.gradle/
+# Integration artifacts (original RC1 JAR is supplied locally; do not forge)
+integration-tests/artifacts/*.jar
+!integration-tests/artifacts/README.md
+!integration-tests/artifacts/verification-status.json
+!integration-tests/artifacts/releases.json
+integration-tests/dependencies/*.jar
+
+# Forensic JSONL written by local Paper / integration runtimes
+**/plugins/ItemGuard/logs/
+
+
+

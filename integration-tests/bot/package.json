@@ -1,0 +1,17 @@
+{
+  "name": "itemguard-integration-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mineflayer client for ItemGuard Paper 1.21.8 integration tests",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node runner.js",
+    "integration": "node runner.js"
+  },
+  "dependencies": {
+    "mineflayer": "^4.37.1",
+    "vec3": "^0.1.10"
+  }
+}

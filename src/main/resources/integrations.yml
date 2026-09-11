@@ -1,0 +1,18 @@
+# Optional third-party integrations. Missing plugins are skipped, not treated as errors.
+
+husksync:
+  enabled: true
+  # When the HuskSync plugin is installed, ItemGuard loads automatically.
+  # Tested with HuskSync 3.8.7 on Paper 1.21.8. Other versions are not claimed.
+  # HuskSync inventory apply is an explainable source (HUSKSYNC_DATA_APPLY),
+  # not an automatic "safe" verdict. 1.0 does not implement cross-server dupe heuristics.
+  attribute-sync-as-expected: true
+  timeout-millis: 15000
+
+# Future integration slots. Do not enable placeholders that are not implemented.
+shop: false
+auction: false
+crates: false
+itemsadder: false
+oraxen: false
+mmoitems: false

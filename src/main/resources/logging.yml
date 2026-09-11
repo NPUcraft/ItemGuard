@@ -1,0 +1,35 @@
+# ItemGuard forensic logs. Asynchronous JSONL for post-incident review.
+# Trace (/ig trace) stays in memory. These files are long-lived disk evidence.
+# ItemGuard never blocks the Paper main thread on disk IO for logging.
+
+logging:
+  enabled: true
+  # Only JSONL is implemented. Other values warn and fall back.
+  format: JSONL
+  # Relative to plugins/ItemGuard/. Path traversal is rejected.
+  directory: logs
+  # Used when aggregating logs from several HuskSync backends.
+  server-name: unknown
+  retention-days: 30
+  max-file-size-mb: 100
+  flush-interval-seconds: 2
+  timezone: system
+
+  queue:
+    capacity: 10000
+
+  categories:
+    alerts: true
+    unknown-gains: true
+    invalid-items: true
+    suspicious-items: true
+    husksync-data-apply: true
+    admin-actions: true
+    high-value-flows: true
+
+  high-value-flow:
+    # ItemValueRegistry weight, not a currency price. Diamond is 25 so default pickup is not logged.
+    minimum-item-value: 30
+
+  console-warning:
+    queue-drop-warning-interval-seconds: 60

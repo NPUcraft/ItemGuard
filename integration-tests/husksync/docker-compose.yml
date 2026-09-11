@@ -1,0 +1,34 @@
+# ItemGuard HuskSync integration-only MariaDB + Redis.
+# Bound to 127.0.0.1 via host-published ports supplied by the runner.
+
+services:
+  mariadb:
+    image: mariadb:11
+    environment:
+      MARIADB_DATABASE: itemguard_husksync_test
+      MARIADB_USER: itemguard_test
+      MARIADB_PASSWORD: itemguard-test-pass
+      MARIADB_ROOT_PASSWORD: itemguard-test-root
+    ports:
+      - "127.0.0.1:${MARIADB_PORT}:3306"
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    tmpfs:
+      - /var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "127.0.0.1:${REDIS_PORT}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+      start_period: 2s

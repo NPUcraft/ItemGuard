@@ -1,0 +1,99 @@
+# Illegal / suspicious item scanner. Custom metadata is context, not proof of cheating.
+# Classifications:
+#   INVALID   — data that cannot be a legal vanilla/Paper item (over-level, oversized stack, illegal durability)
+#   SUSPICIOUS — unusual but not automatically cheating
+#   CUSTOM    — legitimate custom-item markers (name, lore, CustomModelData, unknown PDC)
+#   INFO      — informational only
+
+enabled: true
+auto-remove: false
+
+ignored-namespaces:
+  - minecraft
+  - bukkit
+  - paper
+  - itemsadder
+  - oraxen
+  - mmoitems
+  - mythicmobs
+  - executableitems
+
+enchantments:
+  enabled: true
+  flag-over-level: true
+  flag-conflicting: true
+  # Over-level is INVALID. Conflicting defaults to SUSPICIOUS because some RPG plugins allow it.
+  conflicting-severity: SUSPICIOUS
+
+stack:
+  enabled: true
+  # Uses ItemStack#getMaxStackSize() so legal Data Component max-stack changes are respected.
+  flag-oversized: true
+
+attributes:
+  enabled: true
+  maximum-absolute-amount: 50.0
+  allowed-operations:
+    - ADD_NUMBER
+    - ADD_SCALAR
+    - MULTIPLY_SCALAR_1
+  ignored-materials: []
+  ignored-namespaces:
+    - itemsadder
+    - oraxen
+    - mmoitems
+  # Attribute outliers are SUSPICIOUS unless they violate API/format rules.
+  default-severity: SUSPICIOUS
+
+durability:
+  enabled: true
+  flag-negative: true
+  flag-above-max: true
+
+components:
+  enabled: true
+  # Presence of non-default components is context. Only listed keys can become SUSPICIOUS.
+  flag-overridden: true
+  suspicious-if-overridden:
+    - MAX_STACK_SIZE
+    - ATTRIBUTE_MODIFIERS
+    - MAX_DAMAGE
+    - ENCHANTMENTS
+  custom-if-overridden:
+    - CUSTOM_MODEL_DATA
+    - ITEM_NAME
+    - CUSTOM_NAME
+    - LORE
+    - FOOD
+    - CONSUMABLE
+    - EQUIPPABLE
+    - TOOL
+    - RARITY
+    - POTION_CONTENTS
+    - CONTAINER
+    - BUNDLE_CONTENTS
+
+persistent-data:
+  enabled: true
+  # Unknown PDC namespaces are CUSTOM. Denied namespaces are SUSPICIOUS.
+  # Do not treat minecraft/bukkit/paper or common custom-item plugins as dangerous by default.
+  denied-namespaces: []
+  ignored-namespaces:
+    - minecraft
+    - bukkit
+    - paper
+    - husksync
+    - itemsadder
+    - oraxen
+    - mmoitems
+
+container-contents:
+  enabled: true
+  max-depth: 3
+  scan-inner-items: true
+
+custom-metadata:
+  enabled: true
+  flag-custom-name: true
+  flag-lore: true
+  flag-custom-model-data: true

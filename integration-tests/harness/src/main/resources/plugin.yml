@@ -1,0 +1,14 @@
+name: ItemGuard-TestHarness
+version: 1.0.0-test
+main: dev.itemguard.harness.ItemGuardTestHarnessPlugin
+api-version: '1.21.8'
+author: ItemGuard
+description: Integration-only test harness. Do not install on production servers.
+depend:
+  - ItemGuard
+softdepend:
+  - HuskSync
+commands:
+  igh:
+    description: ItemGuard integration harness control
+    usage: /igh <reset|prepare|kill|creative|survival|diagnostic|identify|events> [player] [scenario]

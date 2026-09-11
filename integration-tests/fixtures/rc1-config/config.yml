@@ -1,0 +1,40 @@
+# ItemGuard core settings. Conservative defaults: detect and alert, never auto-punish.
+# Missing keys keep the in-memory defaults below. ItemGuard never overwrites an existing file.
+
+debug: false
+
+reconciliation:
+  # Dirty players are reconciled on this cadence (game ticks; 20 = 1 second).
+  interval-ticks: 20
+  # Silent-mutation pass. Also game ticks. With interval 20, 40 ≈ every 2 seconds.
+  heartbeat-interval-ticks: 40
+  # How long an expected-flow credit can explain a later inventory gain.
+  expected-flow-ttl-millis: 2500
+  # Same-player inventory events in this window collapse into one reconcile.
+  event-debounce-ticks: 1
+  # Creative inventory creation is tagged CREATIVE_INVENTORY with risk 0. Scanner still works.
+  ignore-creative-inventory-gains: true
+
+trace:
+  retention-minutes: 30
+  max-events-per-player: 2000
+  max-total-events: 100000
+  max-query-duration: 6h
+
+performance:
+  # Skip SHA-256 signatures for items at or below this risk weight unless they have custom data.
+  signature-min-value: 20
+  hash-custom-items: true
+  # Minimum gap between automatic inventory scans of the same player.
+  scan-debounce-millis: 1500
+  # Nested bundle/shulker material totals and scanner recursion.
+  max-scan-depth: 3
+
+session:
+  # ItemGuard HuskSync transaction timeout (not a HuskSync plugin setting).
+  husksync-timeout-millis: 15000
+  keep-trace-after-quit: true
+
+scanner:
+  enabled: true
+  auto-remove: false
