@@ -217,6 +217,47 @@ tasks.register<Exec>("legacyConfigCompatibilityTest") {
     }
 }
 
+tasks.register<Exec>("fieldLogAnalysis") {
+    group = "verification"
+    description = "Parse field forensic ZIP/JSONL into analysis/. Not part of build. Dev-only."
+    workingDir = projectDir
+    outputs.upToDateWhen { false }
+    commandLine("node", "tools/field-log-analyzer/analyze.js")
+    environment("ITEMGUARD_ROOT", projectDir.absolutePath)
+    val zipPath = (findProperty("FieldLogZip") as String?)
+        ?: System.getenv("ITEMGUARD_FIELD_LOG_ZIP")
+        ?: file("itemguard-log.zip").absolutePath
+    environment("ITEMGUARD_FIELD_LOG_ZIP", zipPath)
+    val dirPath = (findProperty("FieldLogDir") as String?)
+        ?: System.getenv("ITEMGUARD_FIELD_LOG_DIR")
+    if (!dirPath.isNullOrBlank()) {
+        environment("ITEMGUARD_FIELD_LOG_DIR", dirPath)
+    }
+}
+
+tasks.register<Exec>("fieldValidationCompare") {
+    group = "verification"
+    description = "Compare PRE-HARDENING baseline report vs a NEW post-hardening forensic zip. Never overwrites the baseline zip/report. Dev-only."
+    workingDir = projectDir
+    outputs.upToDateWhen { false }
+    commandLine("node", "tools/field-log-analyzer/compare.js")
+    environment("ITEMGUARD_ROOT", projectDir.absolutePath)
+    val zipPath = (findProperty("FieldLogZip") as String?)
+        ?: System.getenv("ITEMGUARD_FIELD_AFTER_ZIP")
+        ?: System.getenv("ITEMGUARD_FIELD_LOG_ZIP")
+    if (!zipPath.isNullOrBlank()) {
+        environment("ITEMGUARD_FIELD_AFTER_ZIP", zipPath)
+        environment("ITEMGUARD_FIELD_LOG_ZIP", zipPath)
+    }
+    val dirPath = (findProperty("FieldLogDir") as String?)
+        ?: System.getenv("ITEMGUARD_FIELD_AFTER_DIR")
+        ?: System.getenv("ITEMGUARD_FIELD_LOG_DIR")
+    if (!dirPath.isNullOrBlank()) {
+        environment("ITEMGUARD_FIELD_AFTER_DIR", dirPath)
+        environment("ITEMGUARD_FIELD_LOG_DIR", dirPath)
+    }
+}
+
 tasks.register<Exec>("releaseSmokeTest") {
     group = "verification"
     description = "Clean Paper install smoke: bundled configs, no HuskSync, /ig status, restart. Not part of build."
@@ -297,9 +338,9 @@ tasks.register("packageRelease") {
                 "integrations.yml",
                 "messages.yml",
                 "logging.yml",
-                "dev/itemguard/log/ForensicLogService.class",
-                "dev/itemguard/log/JsonlLogWriter.class",
-                "dev/itemguard/log/ForensicLogPublisher.class"
+                "com/npucraft/itemguard/log/ForensicLogService.class",
+                "com/npucraft/itemguard/log/JsonlLogWriter.class",
+                "com/npucraft/itemguard/log/ForensicLogPublisher.class"
             )
             val missing = required.filter { name: String -> listing.none { entry: String -> entry == name } }
             if (missing.isNotEmpty()) {

@@ -1,0 +1,11 @@
+{
+  "id": "craft-followed-by-duplicate-unknown",
+  "kind": "FIELD-DERIVED REGRESSION",
+  "player": "player-1",
+  "uuid": "00000000-0000-4000-8000-000000000001",
+  "note": "A source hint is one-shot. A later unmatched gain must not reuse the spent craft hint.",
+  "hintMaterial": "DIAMOND",
+  "firstGain": 9,
+  "laterUnrelatedMaterial": "COBBLESTONE",
+  "laterUnrelatedAmount": 8
+}

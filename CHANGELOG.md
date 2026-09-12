@@ -1,5 +1,45 @@
 # Changelog
 
+## 1.0.0-RC3-SNAPSHOT
+
+Field Test prerelease. False-positive hardening after a real-server field test. This is a GitHub **prerelease of `1.0.0-RC3-SNAPSHOT`**, **not** `1.0.0-RC3` and **not** a final 1.0.0.
+
+Risk scoring changed from player-wide signal accumulation to incident-based aggregation so independent normal actions no longer stack into a cheat score. This is a behavior change. FIELD FALSE POSITIVE EVIDENCE.
+
+Published GitHub prerelease `v1.0.0-RC2` already exists from an earlier commit **without** this hardening. Do **not** reuse that tag. Do **not** tag `v1.0.0-RC3` until post-hardening Field Test is accepted.
+
+### Added
+
+- Incident-based risk: `Player current risk = MAX(active incident scores)`
+- Scanner finding state keyed by player + ItemSignature + FindingType
+- Value/amount driven unexplained-gain scoring
+- Source hints vs exact expected credits (tick-scale hint TTL)
+- Optional attribution debug logging (`attribution-debug.enabled`, default false)
+- Forensic JSONL `schemaVersion` 2 optional incident fields
+- Dev-only `fieldLogAnalysis` / `fieldValidationCompare` / `tools/field-log-analyzer` (not in the product JAR)
+- `/ig status` compact Active Incidents / High / Critical counts
+
+### Changed
+
+- Alerts fire only on incident HIGH/CRITICAL threshold crossing
+- `COMPONENT_MODIFIED` / `CUSTOM_ITEM_METADATA` / `CUSTOM_MAX_STACK` default risk 0
+- High-value burst and repeated-identical require minimum item value 20
+- Verified rapid shulker transfer is not high risk by itself
+- Existing operator `risk.yml` is not overwritten; missing keys use the new defaults
+- Diagnostic dump includes `activeIncidents` so HuskSync tests can prove restore is not joined to `ITEM_GAIN`
+
+### Tested (development SNAPSHOT, 2026-09-12)
+
+- Unit: **131/131 PASS** (`gradlew.bat clean test`)
+- Single-server Paper 1.21.8 + Mineflayer 772: **PASS 17 / FAIL 0 / PARTIAL 5**. Original 14/14 PASS. Extra PASS: NUMBER-KEY, MERCHANT-TRADE, KNOWN-OP-STRESS (100 ops, UNKNOWN=0). SHIFT-CRAFT is PARTIAL this run (Mineflayer uncrafted 2/3 blocks → inventory DIAMOND=18 CRAFTING+18, leftover 1 DIAMOND_BLOCK, UNKNOWN=0). Not an ItemGuard UNKNOWN regression.
+- HuskSync cluster (Velocity + Paper A/B + HuskSync 3.8.7 + MariaDB 11 + Redis 7 + Mineflayer 4.39.0 + RC3-SNAPSHOT): **HS-001…HS-005 PASS**. HS-006/007/008 remain NOT AUTOMATED.
+- Normal suite: 150 sequences, 0 High, 0 Critical
+- Threat suite: 5/5 detected, 0 missed
+- Field Test Build: `build/libs/ItemGuard-1.0.0-RC3-SNAPSHOT.jar`
+- GitHub prerelease tag: `v1.0.0-RC3-SNAPSHOT` (**FIELD TEST ELIGIBLE**, not RC3 READY)
+
+Do **not** tag `v1.0.0-RC3` until post-hardening Field Test metrics are accepted.
+
 ## 1.0.0-RC2
 
 Forensic JSONL logging. Exact RC1-binary upgrade is still blocked without the original JAR. RC1 YAML compatibility is covered separately. Detection, risk, and scanner behavior are unchanged from RC1.
@@ -14,12 +54,14 @@ Forensic JSONL logging. Exact RC1-binary upgrade is still blocked without the or
 - Real Paper RC1 → RC2 upgrade integration test (`gradlew.bat upgradeIntegrationTest`) — requires the original RC1 JAR checksum
 - RC1 YAML compatibility test (`gradlew.bat legacyConfigCompatibilityTest`) — does **not** replace exact artifact upgrade
 - Reproducible JAR output (`preserveFileTimestamps = false`, `reproducibleFileOrder = true`)
+- Startup console banner: `ItemGuard by NPUcraft`
 
 ### Changed
 
 - First install now also creates `logging.yml`
 - `/ig status` includes forensic logger health and queue info
 - Bundled YAML install is centralized in `ConfigResourcePolicy`: copy from the JAR only when the destination file is missing
+- Java package and Maven group are `com.npucraft.itemguard` (breaking for callers of the old `dev.itemguard` API)
 
 ### Fixed
 
@@ -27,7 +69,7 @@ Forensic JSONL logging. Exact RC1-binary upgrade is still blocked without the or
 
 ### Tested
 
-- Unit tests: 82/82 PASS
+- Unit tests: 83/83 PASS
 - Real Paper 1.21.8 + Mineflayer protocol 772 (14/14 single-server)
 - Velocity + Paper A/B + HuskSync 3.8.7 + MariaDB + Redis + Mineflayer (HS-001…HS-005)
 - `legacyConfigCompatibilityTest`: PASS (`CONFIG_COMPATIBILITY_UPGRADE` only)

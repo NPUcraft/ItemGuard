@@ -45,5 +45,9 @@ integration-tests/dependencies/*.jar
 # Forensic JSONL written by local Paper / integration runtimes
 **/plugins/ItemGuard/logs/
 
+# Real server field dumps (PII). Analyzer reads them locally; do not commit.
+itemguard-log.zip
+field-test-logs/
+
 
 

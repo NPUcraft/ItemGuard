@@ -59,7 +59,7 @@ function resolveItemGuardJar(root, explicit) {
   }
   const dir = path.join(root, 'build', 'libs');
   if (!pathExists(dir)) {
-    return explicit || path.join(dir, 'ItemGuard-1.0.0-RC2.jar');
+    return explicit || path.join(dir, 'ItemGuard-1.0.0-RC3-SNAPSHOT.jar');
   }
   const jars = fs.readdirSync(dir).filter((name) =>
     /^ItemGuard-.+\.jar$/.test(name)
@@ -67,7 +67,7 @@ function resolveItemGuardJar(root, explicit) {
       && !name.endsWith('-javadoc.jar')
   );
   if (jars.length === 0) {
-    return explicit || path.join(dir, 'ItemGuard-1.0.0-RC2.jar');
+    return explicit || path.join(dir, 'ItemGuard-1.0.0-RC3-SNAPSHOT.jar');
   }
   jars.sort((a, b) => fs.statSync(path.join(dir, b)).mtimeMs - fs.statSync(path.join(dir, a)).mtimeMs);
   return path.join(dir, jars[0]);
@@ -244,8 +244,8 @@ function assertForensicRecordSafe(record) {
     }
   };
   walk(record, null);
-  if (record.schemaVersion !== 1) {
-    throw new Error('Forensic JSONL schemaVersion is not 1: ' + JSON.stringify(record));
+  if (record.schemaVersion !== 1 && record.schemaVersion !== 2) {
+    throw new Error('Forensic JSONL schemaVersion is not 1 or 2: ' + JSON.stringify(record));
   }
 }
 

@@ -1,8 +1,6 @@
-# Risk scores are additive and clamped to 0..100. Trusted sources do not subtract risk.
-# Active, unexpired signals are summed. Same type+material+correlation is deduplicated.
-# Custom metadata signals (name/lore/PDC/components/max-stack) share family-caps.custom-metadata
-# per correlation so a legal custom item cannot stack past that cap by itself.
-# Unrelated events inside signal-ttl-millis can still add together; that is intentional.
+# Player current risk is MAX(active incident scores), not the sum of every unexpired signal.
+# Related evidence can combine inside one incident. Unrelated incidents never stack.
+# Missing keys use in-memory defaults. Existing operator files are never overwritten.
 
 scores:
   UNEXPLAINED_ITEM_GAIN: 35
@@ -11,18 +9,18 @@ scores:
   REPEATED_IDENTICAL_ITEMS: 15
   RAPID_ITEM_GAIN: 10
   SHULKER_HIGH_FLOW: 10
-  SHULKER_RAPID_TRANSFER: 12
+  SHULKER_RAPID_TRANSFER: 0
   ILLEGAL_ENCHANTMENT: 40
   OVER_LEVEL_ENCHANTMENT: 40
-  CONFLICTING_ENCHANTMENTS: 20
+  CONFLICTING_ENCHANTMENTS: 10
   OVERSIZED_STACK: 45
   SUSPICIOUS_ATTRIBUTE: 15
   SUSPICIOUS_COMPONENT: 12
-  COMPONENT_MODIFIED: 4
-  CUSTOM_ITEM_METADATA: 2
+  COMPONENT_MODIFIED: 0
+  CUSTOM_ITEM_METADATA: 0
   ABNORMAL_DURABILITY: 25
   SUSPICIOUS_CONTAINER_CONTENTS: 18
-  CUSTOM_MAX_STACK: 8
+  CUSTOM_MAX_STACK: 0
   HUSKSYNC_DATA_APPLY: 0
   KNOWN_CONTAINER_SOURCE: 0
   # Reserved for 1.1+ cross-server heuristics. Unused in 1.0 detectors.
@@ -42,7 +40,7 @@ windows:
   high-value-burst-millis: 10000
   repeated-identical-millis: 30000
   shulker-flow-millis: 10000
-  # How long a signal stays in the live score before it expires.
+  # Fallback expiry for a produced signal object. Incident TTLs below are the live score window.
   signal-ttl-millis: 120000
 
 thresholds:
@@ -53,13 +51,40 @@ thresholds:
   shulker-rapid-transfer-millis: 750
   unexplained-min-amount: 1
 
+incidents:
+  item-gain-ttl-seconds: 20
+  illegal-item-ttl-seconds: 120
+  suspicious-item-ttl-seconds: 120
+  shulker-ttl-seconds: 15
+  max-active-per-player: 16
+  # Related ITEM_GAIN evidence can join only inside this wave window. Later chest/pickup of the same material starts a new incident.
+  item-gain-join-millis: 2000
+
+# UNKNOWN is attribution state. These scores are driven by item value and amount.
+unknown-gain:
+  low-value-max: 5
+  high-value-min: 20
+  extreme-value-min: 50
+  low-score: 3
+  medium-score: 10
+  high-score: 25
+  extreme-score: 35
+  weighted-high: 800
+  weighted-critical: 4000
+
+detectors:
+  high-value-burst-minimum-item-value: 20
+  repeated-identical-minimum-item-value: 20
+  rapid-low-value-max-item-value: 5
+  rapid-low-value-score: 3
+  shulker-gate-minimum-item-value: 20
+
 cooldowns:
   same-signal-millis: 8000
   alert-millis: 10000
 
 deduplicate-same-correlation: true
 
-# Same custom-item facts (name/lore/PDC/components/max-stack) share one cap per correlation.
+# Same custom-item facts share one cap per correlation. Default scores for those facts are 0.
 family-caps:
   custom-metadata: 10
-

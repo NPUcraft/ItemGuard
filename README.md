@@ -11,7 +11,12 @@ ItemGuard 会检测异常物品流动、非法或可疑物品，以及复制（d
 > ItemGuard 检测异常物品流动、非法/可疑物品以及复制迹象。  
 > 它不保证能预防或发现每一种复制漏洞。
 
-当前版本：**1.0.0-RC2**（候选发布，不是正式 1.0.0）。
+当前版本：
+
+- **已公开发布 RC2：** `1.0.0-RC2`（GitHub prerelease [`v1.0.0-RC2`](https://github.com/NPUcraft/ItemGuard/releases/tag/v1.0.0-RC2)）。该制品**不包含**误报 hardening。
+- **当前 Field Test 预发布：** `1.0.0-RC3-SNAPSHOT`（GitHub prerelease [`v1.0.0-RC3-SNAPSHOT`](https://github.com/NPUcraft/ItemGuard/releases/tag/v1.0.0-RC3-SNAPSHOT)）。**不是** `1.0.0-RC3`，也不是正式 1.0.0。
+
+不要把 GitHub 上的 RC2 当成已经包含 incident 引擎 / SourceHint hardening。
 
 ## ItemGuard 会做什么
 
@@ -48,12 +53,12 @@ ItemGuard 会检测异常物品流动、非法或可疑物品，以及复制（d
 ## 安装
 
 1. 安装 Java 21 与 Paper 1.21.8。
-2. 把 `ItemGuard-1.0.0-RC2.jar` 放到 Paper 的 `plugins/` 目录。
+2. 把 JAR 放到 Paper 的 `plugins/` 目录。误报 hardening Field Test 请用 `ItemGuard-1.0.0-RC3-SNAPSHOT.jar`。GitHub 上的 `ItemGuard-1.0.0-RC2.jar` 仍是不含 hardening 的已发布 RC2。
 3. 启动一次服务器。若配置文件尚不存在，ItemGuard 会把默认 YAML 复制到 `plugins/ItemGuard/`。
 4. 按需修改这些文件，然后执行 `/ig reload`。
 5. 给管理组 `itemguard.admin` 权限（默认：OP）。
 
-这是 **Release Candidate**。请先在测试服使用。注意自定义物品以及经济/奖励类插件带来的误报。
+GitHub 上的 `1.0.0-RC2` 是已发布的候选版。本仓库当前构建是 **1.0.0-RC3-SNAPSHOT**（Field Test 候选，不是 RC3 发布）。请先在测试服使用。注意自定义物品以及经济/奖励类插件带来的误报。
 
 ## 从 RC1 升级
 
@@ -90,7 +95,7 @@ ItemGuard **从不**读取 HuskSync 数据库、Redis 或 Velocity 转发密钥�
 | 命令 | 说明 |
 | --- | --- |
 | `/ig help` | 列出发送者可用的命令 |
-| `/ig status` | 插件、Paper、扫描器、流动、风险、HuskSync、取证日志状态 |
+| `/ig status` | 插件、Paper、扫描器、流动、风险、HuskSync、取证日志，以及 Active Incidents / High / Critical |
 | `/ig inspect <玩家>` | 实时风险 / 流动 / HuskSync 摘要 |
 | `/ig trace <玩家> [时长] [物品]` | 内存时间线（默认 `5m`） |
 | `/ig scan <玩家>` | 扫描当前背包 |
@@ -138,16 +143,19 @@ ItemGuard **从不**读取 HuskSync 数据库、Redis 或 Velocity 转发密钥�
 
 **半原版** — 保留扫描器的 INVALID 规则；商店/抽奖若直接发物品，那些插件应调用 `ItemGuardApi.recordExpectedGain`，否则会出现无法解释的获得。
 
-**RPG / 自定义物品服** — 在 `risk.yml` 中降低或置零 `CUSTOM_ITEM_METADATA`、`COMPONENT_MODIFIED`、`CUSTOM_MAX_STACK`，并/或把物品插件命名空间加到 `scanner.yml` 的 `persistent-data.ignored-namespaces`。除非你真的允许超堆叠/超等级附魔，否则不要关掉 `OVERSIZED_STACK` / `OVER_LEVEL_ENCHANTMENT`。
+**RPG / 自定义物品服** — 默认 `CUSTOM_ITEM_METADATA`、`COMPONENT_MODIFIED`、`CUSTOM_MAX_STACK` 已经是 0 分。仍建议把物品插件命名空间加到 `scanner.yml` 的 `persistent-data.ignored-namespaces`。除非你真的允许超堆叠/超等级附魔，否则不要关掉 `OVERSIZED_STACK` / `OVER_LEVEL_ENCHANTMENT`。
 
 ## 风险打分如何工作
 
-每个检测器发出可解释信号。尚未过期的有效信号**相加**，并限制在 0–100。
+每个检测器发出可解释信号，信号进入**独立 Incident**。玩家当前风险是 **MAX(未过期 Incident 分数)**，不是把过去 120 秒里所有信号加在一起。
 
-- 默认管理组警报：**60**（HIGH）
-- 危急：**80**
+同一波物品流（例如 UNKNOWN 钻石 + 高价值爆发 + 重复相同签名）可以组合进同一个 `ITEM_GAIN` incident。无关事件（可疑靴子、已验证的潜影盒整理、圆石拾取）不会互相叠分。
+
+- 默认管理组警报：**Incident 从 &lt;60 跨到 ≥60** 发一次 HIGH
+- 危急：**从 &lt;80 跨到 ≥80** 发一次 CRITICAL
+- 已经 CRITICAL 的 incident 不会因为每一笔新 Flow 再刷屏
 - 默认策略：**先警报，永不自动处罚**
-- 服更吵时，管理员可以提高阈值
+- UNKNOWN 是归因状态，不是作弊结论。低价值无法解释获得只记取证，默认风险 0–5
 
 默认分值（不是完整列表）：
 
@@ -155,17 +163,18 @@ ItemGuard **从不**读取 HuskSync 数据库、Redis 或 Velocity 转发密钥�
 | --- | --- |
 | `OVERSIZED_STACK` | 45 |
 | `OVER_LEVEL_ENCHANTMENT` | 40 |
-| `UNEXPLAINED_ITEM_GAIN` | 35 |
-| `HIGH_VALUE_ITEM_BURST` / `RARE_ITEM_BURST` | 20 |
-| `CUSTOM_ITEM_METADATA` | 2 |
-| `COMPONENT_MODIFIED` | 4 |
+| `UNEXPLAINED_ITEM_GAIN` | 按物品价值/数量（约 3–35），不再固定 +35 |
+| `HIGH_VALUE_ITEM_BURST` / `RARE_ITEM_BURST` | 20，且要求 `item-value >= 20` |
+| `CUSTOM_ITEM_METADATA` | 0 |
+| `COMPONENT_MODIFIED` | 0 |
+| `SHULKER_RAPID_TRANSFER` | 0（单独的快速转移不构成警报） |
 | `HUSKSYNC_DATA_APPLY` | 0 |
 | 创造模式背包（`CREATIVE_INVENTORY`） | 0 |
 | 已知容器来源 | 0 |
 
-自定义名称/lore/PDC/组件/最大堆叠这类事实，在同一关联上有 **家族上限 10 分**，合法自定义物品不会单靠这些信号叠到警报阈值。
+扫描器对同一 `player + ItemSignature + FindingType` 只贡献一次风险；重复扫描只更新 lastSeen/slot。
 
-信号存活时间为 `signal-ttl-millis`（默认 120 秒）。这是滚动窗口，不是“一次事件一簇”：窗口内不相关的事件会相加（例如无法解释 35 + 高价值爆发 20 = 55，仍低于 60）。相同类型 + 物品 + 关联会去重。
+GUI source hint 默认 TTL 为 **250ms**（tick 级），精确 pickup credit 仍为 2500ms。
 
 `items.yml` 的数值是**爆发检测用的风险权重**，不是经济价格表。
 
@@ -222,6 +231,9 @@ ItemGuard 宁可抓住无法解释的高价值流动，也不选择沉默。产�
 如果其他插件把物品**直接**放进玩家背包，请在物品出现**之前**登记这次获得：
 
 ```java
+import com.npucraft.itemguard.api.ItemGuardApi;
+import com.npucraft.itemguard.api.ItemGuardApiProvider;
+
 if (ItemGuardApiProvider.isAvailable()) {
     ItemGuardApi api = ItemGuardApiProvider.get();
     api.recordExpectedGain(player.getUniqueId(), "DIAMOND", 16, "MyCratePlugin", rewardId);
@@ -244,7 +256,7 @@ if (ItemGuardApiProvider.isAvailable()) {
 
 ## 测试
 
-ItemGuard RC2 的自动化覆盖包括：
+ItemGuard 当前开发构建（`1.0.0-RC3-SNAPSHOT`）的自动化覆盖包括：
 
 - 单元测试（纯 Java）
 - 真实 Paper **1.21.8** + Mineflayer 协议 **772**
@@ -281,7 +293,7 @@ gradlew.bat releaseSmokeTest
 3. Paper API 看不见或不可靠的数据，不会假装已经扫描。
 4. HuskSync 正式自动化测试仅覆盖 **3.8.7 + Paper 1.21.8**。
 5. HS-006 / HS-007 / HS-008 **未**纳入自动化 HuskSync 套件。
-6. 120 秒 TTL 窗口内的风险信号会相加；两件不相关但合法偏吵的事件仍可能接近警报阈值。
+6. 玩家当前风险是 **MAX(活跃 incident 分数)**，不是 120 秒窗口内全部信号的全局 SUM。不相关的合法事件不再叠成作弊分；同一 `ITEM_GAIN` 波次内的相关 signal 仍会组合。
 7. 没有 SQLite、Web 控制台、日志搜索命令、自动封禁、回滚，也没有 ItemGuard 自有的 Redis。重要事件会异步写入 `plugins/ItemGuard/logs/` 下的本地 JSONL。
 
 ## 构建
@@ -290,11 +302,13 @@ gradlew.bat releaseSmokeTest
 gradlew.bat clean build
 ```
 
-产品 JAR：
+产品 JAR（本仓库开发构建 / Field Test Build）：
 
 ```text
-build/libs/ItemGuard-1.0.0-RC2.jar
+build/libs/ItemGuard-1.0.0-RC3-SNAPSHOT.jar
 ```
+
+已公开发布的 GitHub prerelease 包括不含 hardening 的 `ItemGuard-1.0.0-RC2.jar`，以及 Field Test 预发布 `ItemGuard-1.0.0-RC3-SNAPSHOT.jar`。不要把 SNAPSHOT 当成 RC3 正式发布，也不要复用 `v1.0.0-RC2` 标签。
 
 GitHub Actions 会在 `main` 上编译并上传 JAR；推送 `v*` 标签时会跑单元测试、执行 `packageRelease`，并创建 GitHub Release。官方下载见 [Releases](https://github.com/NPUcraft/ItemGuard/releases)。
 

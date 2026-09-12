@@ -202,6 +202,12 @@ async function hs001(ctx) {
   assert(applyLog, 'missing HUSKSYNC_DATA_APPLY forensic record', 'ITEMGUARD_BUG');
   assertEq(Number(applyLog.riskScore), 0, 'HUSKSYNC_DATA_APPLY riskScore', 'ITEMGUARD_BUG');
   assertEq(applyLog.serverName, 'server-b', 'HUSKSYNC_DATA_APPLY serverName', 'ITEMGUARD_BUG');
+  assertHuskSyncForensicV2(applyLog, 'HS-001 forensic');
+  assertNoItemGainIncident(snapshot, 'HS-001 after apply');
+  assertNoItemGainIncident(afterHeartbeats.snapshot, 'HS-001 after heartbeat');
+  assertNoStaleCredits(snapshot, 'HS-001 after apply');
+  assertNoStaleCredits(afterHeartbeats.snapshot, 'HS-001 after heartbeat');
+  assertNoAlerts(afterHeartbeats.snapshot, 'HS-001');
   const unknownLogs = forensic.logs.events.filter((record) => (
     record.type === 'UNKNOWN_GAIN'
     && record.playerUuid === uuidB
@@ -248,11 +254,10 @@ async function hs002(ctx) {
   assertNoUnknown(last.snapshot, mark, 'HS-002');
   assertIdle(last.snapshot);
   assertNoBurst(last.snapshot);
-  assert((last.snapshot.expectedCredits || []).length === 0, 'Stale expected credits after repeated switching', 'ITEMGUARD_BUG');
-  const alerts = (last.snapshot.recentAlerts || []).filter((alert) => (
-    !alert.expired && /UNEXPLAINED|BURST|UNKNOWN/i.test(String(alert.type || alert.reason || alert.message || ''))
-  ));
-  assert(alerts.length === 0, `Alert spam during repeated switching: ${JSON.stringify(alerts)}`, 'ITEMGUARD_BUG');
+  assertNoItemGainIncident(last.snapshot, 'HS-002');
+  assertNoStaleCredits(last.snapshot, 'HS-002');
+  assertNoAlerts(last.snapshot, 'HS-002');
+  assert(Number(last.snapshot.riskScore || 0) === 0, `HS-002 risk ${last.snapshot.riskScore}`, 'ITEMGUARD_BUG');
   return {
     status: 'PASS',
     details: {
@@ -324,7 +329,12 @@ async function hs003(ctx) {
   assert(applied >= 32, `B did not attribute restored diamonds as HUSKSYNC_DATA_APPLY (saw ${applied})`, 'ITEMGUARD_BUG');
   assertNoUnknown(afterB.snapshot, null, 'HS-003 B restore');
   assertIdle(afterB.snapshot);
+  assertNoItemGainIncident(afterB.snapshot, 'HS-003 B restore');
+  assertNoStaleCredits(afterB.snapshot, 'HS-003 B restore');
+  assertNoAlerts(afterB.snapshot, 'HS-003 B restore');
   assert(Number(afterB.snapshot.riskScore || 0) === 0, `B risk ${afterB.snapshot.riskScore} after legitimate 96 restore`, 'ITEMGUARD_BUG');
+  const restoreJoin = (afterB.snapshot.activeIncidents || []).filter((incident) => incident.type === 'ITEM_GAIN');
+  assert(restoreJoin.length === 0, `HuskSync restore joined an ITEM_GAIN incident: ${JSON.stringify(restoreJoin)}`, 'ITEMGUARD_BUG');
   return {
     status: 'PASS',
     details: {
@@ -347,6 +357,11 @@ async function hs004(ctx) {
   const laterApply = newFlows(afterHeartbeats.snapshot || {}, mark, (flow) => flow.source === 'HUSKSYNC_DATA_APPLY');
   assert(laterApply.length === 0, `Duplicate HUSKSYNC_DATA_APPLY after heartbeat: ${JSON.stringify(laterApply)}`, 'ITEMGUARD_BUG');
   assertNoBurst(afterHeartbeats.snapshot);
+  assertNoItemGainIncident(afterHeartbeats.snapshot, 'HS-004');
+  assertNoStaleCredits(afterHeartbeats.snapshot, 'HS-004');
+  assertNoAlerts(afterHeartbeats.snapshot, 'HS-004');
+  assert(Number(afterHeartbeats.snapshot.riskScore || 0) === 0, `HS-004 risk ${afterHeartbeats.snapshot.riskScore}`, 'ITEMGUARD_BUG');
+  assertIdle(afterHeartbeats.snapshot);
   const leftover = Object.entries(afterHeartbeats.snapshot.lastDiff || {}).filter(([, amount]) => Number(amount) !== 0);
   assert(leftover.length === 0, `lastDiff not empty after heartbeat: ${JSON.stringify(afterHeartbeats.snapshot.lastDiff)}`, 'ITEMGUARD_BUG');
   assertEq(countByName(afterHeartbeats.inventory, 'DIAMOND'), 64, 'HS-004 diamonds', 'ITEMGUARD_BUG');
@@ -408,6 +423,25 @@ async function hs005(ctx) {
   }
   assertNoUnknown(after.snapshot, mark, 'HS-005 restore');
   assertIdle(after.snapshot);
+  assertNoItemGainIncident(after.snapshot, 'HS-005 restore');
+  assertNoStaleCredits(after.snapshot, 'HS-005 restore');
+  assertNoAlerts(after.snapshot, 'HS-005 restore');
+  assert(Number(after.snapshot.riskScore || 0) === 0, `HS-005 risk ${after.snapshot.riskScore}`, 'ITEMGUARD_BUG');
+  const forensic = await waitForForensic(ctx.paperB.runtimeDir, (logs) => (
+    logs.events.some((record) => (
+      record.type === 'HUSKSYNC_DATA_APPLY' && Number(record.epochMillis || 0) >= restoreAt - 250
+    ))
+  ), { timeout: 5000, message: 'HS-005 did not write HUSKSYNC_DATA_APPLY JSONL' });
+  const applyLog = (forensic.logs.events || [])
+    .filter((record) => record.type === 'HUSKSYNC_DATA_APPLY' && Number(record.epochMillis || 0) >= restoreAt - 250)
+    .sort((a, b) => Number(b.epochMillis || 0) - Number(a.epochMillis || 0))[0];
+  assert(applyLog, 'HS-005 missing HUSKSYNC_DATA_APPLY forensic record', 'ITEMGUARD_BUG');
+  assertHuskSyncForensicV2(applyLog, 'HS-005 forensic');
+  const unknownLogs = (forensic.logs.events || []).filter((record) => (
+    record.type === 'UNKNOWN_GAIN'
+    && Number(record.epochMillis || 0) >= restoreAt - 250
+  ));
+  assert(unknownLogs.length === 0, `HS-005 restore wrote UNKNOWN_GAIN JSONL: ${JSON.stringify(unknownLogs)}`, 'ITEMGUARD_BUG');
   const leftover = Object.entries(after.snapshot.lastDiff || {}).filter(([, amount]) => Number(amount) !== 0);
   const afterHb = await waitHeartbeats(harness, 2, 10000);
   assertNoUnknown(afterHb.snapshot, markFromDump(after), 'HS-005 heartbeat');
@@ -493,6 +527,35 @@ async function switchAndStable(ctx, target, inventory, mark) {
 function assertNoUnknown(snapshot, mark, label) {
   const unknown = unknownGains(snapshot, mark);
   assert(unknown.length === 0, `${label}: UNKNOWN gain ${JSON.stringify(unknown)}`, 'ITEMGUARD_BUG');
+}
+
+function assertNoItemGainIncident(snapshot, label) {
+  const incidents = (snapshot && snapshot.activeIncidents) || [];
+  const itemGain = incidents.filter((incident) => String(incident.type || '') === 'ITEM_GAIN');
+  assert(itemGain.length === 0, `${label}: restore/sync entered ITEM_GAIN incident ${JSON.stringify(itemGain)}`, 'ITEMGUARD_BUG');
+}
+
+function assertNoStaleCredits(snapshot, label) {
+  const credits = (snapshot && snapshot.expectedCredits) || [];
+  const stale = credits.filter((credit) => credit.oneShot === true || Number(credit.remainingAmount || 0) > 0);
+  assert(credits.length === 0 && stale.length === 0, `${label}: stale SourceHint/ExactCredit ${JSON.stringify(credits)}`, 'ITEMGUARD_BUG');
+}
+
+function assertNoAlerts(snapshot, label) {
+  const alerts = (snapshot && snapshot.recentAlerts) || [];
+  assert(alerts.length === 0, `${label}: unexpected staff alert ${JSON.stringify(alerts)}`, 'ITEMGUARD_BUG');
+}
+
+function assertHuskSyncForensicV2(record, label) {
+  assert(record && record.type === 'HUSKSYNC_DATA_APPLY', `${label}: type is ${record && record.type}`, 'ITEMGUARD_BUG');
+  assertEq(Number(record.schemaVersion), 2, `${label} schemaVersion`, 'ITEMGUARD_BUG');
+  assertEq(Number(record.riskScore), 0, `${label} riskScore`, 'ITEMGUARD_BUG');
+  const incidentType = record.incidentType;
+  assert(
+    incidentType == null || incidentType === '' || incidentType !== 'ITEM_GAIN',
+    `${label}: HUSKSYNC_DATA_APPLY attached to ITEM_GAIN incident (${incidentType})`,
+    'ITEMGUARD_BUG'
+  );
 }
 
 function assertIdle(snapshot) {

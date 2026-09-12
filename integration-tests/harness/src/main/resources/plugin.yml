@@ -1,8 +1,8 @@
 name: ItemGuard-TestHarness
 version: 1.0.0-test
-main: dev.itemguard.harness.ItemGuardTestHarnessPlugin
+main: com.npucraft.itemguard.harness.ItemGuardTestHarnessPlugin
 api-version: '1.21.8'
-author: ItemGuard
+author: NPUcraft
 description: Integration-only test harness. Do not install on production servers.
 depend:
   - ItemGuard

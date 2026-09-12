@@ -1,6 +1,5 @@
-# Risk scores are additive and clamped to 0..100. Trusted sources do not subtract risk.
-# Integration overlay: short signal TTL so AUTO-014 does not wait 120 seconds.
-# Product default remains 120000 in src/main/resources/risk.yml.
+# Integration overlay. Short incident TTLs so AUTO-014 does not wait 120 seconds.
+# Player risk is MAX(active incidents). Missing keys use product defaults.
 
 scores:
   UNEXPLAINED_ITEM_GAIN: 35
@@ -9,18 +8,18 @@ scores:
   REPEATED_IDENTICAL_ITEMS: 15
   RAPID_ITEM_GAIN: 10
   SHULKER_HIGH_FLOW: 10
-  SHULKER_RAPID_TRANSFER: 12
+  SHULKER_RAPID_TRANSFER: 0
   ILLEGAL_ENCHANTMENT: 40
   OVER_LEVEL_ENCHANTMENT: 40
-  CONFLICTING_ENCHANTMENTS: 20
+  CONFLICTING_ENCHANTMENTS: 10
   OVERSIZED_STACK: 45
   SUSPICIOUS_ATTRIBUTE: 15
   SUSPICIOUS_COMPONENT: 12
-  COMPONENT_MODIFIED: 4
-  CUSTOM_ITEM_METADATA: 2
+  COMPONENT_MODIFIED: 0
+  CUSTOM_ITEM_METADATA: 0
   ABNORMAL_DURABILITY: 25
   SUSPICIOUS_CONTAINER_CONTENTS: 18
-  CUSTOM_MAX_STACK: 8
+  CUSTOM_MAX_STACK: 0
   HUSKSYNC_DATA_APPLY: 0
   KNOWN_CONTAINER_SOURCE: 0
   HUSKSYNC_REPEATED_SYNC: 8
@@ -47,6 +46,32 @@ thresholds:
   shulker-high-flow-transfers: 24
   shulker-rapid-transfer-millis: 750
   unexplained-min-amount: 1
+
+incidents:
+  item-gain-ttl-seconds: 8
+  illegal-item-ttl-seconds: 8
+  suspicious-item-ttl-seconds: 8
+  shulker-ttl-seconds: 8
+  max-active-per-player: 16
+  item-gain-join-millis: 2000
+
+unknown-gain:
+  low-value-max: 5
+  high-value-min: 20
+  extreme-value-min: 50
+  low-score: 3
+  medium-score: 10
+  high-score: 25
+  extreme-score: 35
+  weighted-high: 800
+  weighted-critical: 4000
+
+detectors:
+  high-value-burst-minimum-item-value: 20
+  repeated-identical-minimum-item-value: 20
+  rapid-low-value-max-item-value: 5
+  rapid-low-value-score: 3
+  shulker-gate-minimum-item-value: 20
 
 cooldowns:
   same-signal-millis: 8000

@@ -2,7 +2,7 @@ plugins {
     java
 }
 
-group = "dev.itemguard"
+group = "com.npucraft.itemguard"
 version = "1.0.0-test"
 description = "Integration-only Paper plugin. Not part of the ItemGuard product JAR."
 

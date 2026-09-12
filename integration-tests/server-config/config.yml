@@ -5,6 +5,8 @@ reconciliation:
   interval-ticks: 20
   heartbeat-interval-ticks: 40
   expected-flow-ttl-millis: 2500
+  source-hint-ttl-millis: 250
+  attribution-grace-ticks: 1
   event-debounce-ticks: 1
   ignore-creative-inventory-gains: true
 

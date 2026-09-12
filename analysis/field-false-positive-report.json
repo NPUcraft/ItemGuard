@@ -1,0 +1,974 @@
+{
+  "generatedAt": "2026-09-12T08:40:51.681Z",
+  "source": "itemguard-log.zip",
+  "schemaVersions": [
+    1
+  ],
+  "note": "Player names/UUIDs are anonymized. This is field evidence analysis, not a full server replay.",
+  "timeRange": {
+    "startEpochMillis": 1789175737464,
+    "endEpochMillis": 1789201630898,
+    "startIso": "2026-09-12T09:15:37.464+08:00",
+    "endIso": "2026-09-12T16:27:10.898+08:00",
+    "spanHours": 7.193
+  },
+  "records": {
+    "total": 4253,
+    "alerts": 3423,
+    "events": 828,
+    "unknownGain": 504,
+    "suspiciousItem": 218,
+    "invalidItem": 0,
+    "highValueFlow": 57,
+    "huskSyncApply": 49
+  },
+  "players": 7,
+  "alerts": {
+    "total": 3423,
+    "perHour": 475.9,
+    "riskGe60": 3423,
+    "riskGe80": 3157,
+    "riskEq100": 2411,
+    "criticalPriorityOrScore80": 3157,
+    "starPlusZero": 2314,
+    "byHour": {
+      "2026-09-12T01": 263,
+      "2026-09-12T02": 913,
+      "2026-09-12T03": 253,
+      "2026-09-12T04": 181,
+      "2026-09-12T05": 862,
+      "2026-09-12T06": 253,
+      "2026-09-12T07": 281,
+      "2026-09-12T08": 417
+    },
+    "byPlayer": [
+      {
+        "key": "player-3",
+        "count": 803
+      },
+      {
+        "key": "player-7",
+        "count": 722
+      },
+      {
+        "key": "player-2",
+        "count": 678
+      },
+      {
+        "key": "player-4",
+        "count": 650
+      },
+      {
+        "key": "player-5",
+        "count": 456
+      },
+      {
+        "key": "player-6",
+        "count": 114
+      }
+    ],
+    "risk100ByPlayer": [
+      {
+        "key": "player-3",
+        "count": 632
+      },
+      {
+        "key": "player-7",
+        "count": 562
+      },
+      {
+        "key": "player-2",
+        "count": 512
+      },
+      {
+        "key": "player-4",
+        "count": 363
+      },
+      {
+        "key": "player-5",
+        "count": 258
+      },
+      {
+        "key": "player-6",
+        "count": 84
+      }
+    ],
+    "reasonCategories": [
+      {
+        "key": "RISK_THRESHOLD_REACHED",
+        "count": 3027
+      },
+      {
+        "key": "COMPONENT_MODIFIED",
+        "count": 659
+      },
+      {
+        "key": "UNEXPLAINED_ITEM_GAIN",
+        "count": 325
+      },
+      {
+        "key": "CUSTOM_ITEM_METADATA",
+        "count": 162
+      },
+      {
+        "key": "OTHER",
+        "count": 141
+      },
+      {
+        "key": "RAPID_OR_HIGH_VALUE_BURST",
+        "count": 61
+      },
+      {
+        "key": "BURST",
+        "count": 59
+      },
+      {
+        "key": "SHULKER",
+        "count": 26
+      }
+    ],
+    "materials": [
+      {
+        "key": "*",
+        "count": 2314
+      },
+      {
+        "key": "DIRT",
+        "count": 127
+      },
+      {
+        "key": "GRASS_BLOCK",
+        "count": 108
+      },
+      {
+        "key": "STONE",
+        "count": 44
+      },
+      {
+        "key": "POLISHED_DIORITE",
+        "count": 35
+      },
+      {
+        "key": "WHEAT_SEEDS",
+        "count": 32
+      },
+      {
+        "key": "SMOOTH_STONE",
+        "count": 29
+      },
+      {
+        "key": "STONE_BRICKS",
+        "count": 28
+      },
+      {
+        "key": "COBBLESTONE",
+        "count": 26
+      },
+      {
+        "key": "SHULKER_BOX",
+        "count": 24
+      },
+      {
+        "key": "SANDSTONE",
+        "count": 22
+      },
+      {
+        "key": "POWERED_RAIL",
+        "count": 18
+      },
+      {
+        "key": "END_ROD",
+        "count": 18
+      },
+      {
+        "key": "POLISHED_DIORITE_SLAB",
+        "count": 18
+      },
+      {
+        "key": "ACACIA_SLAB",
+        "count": 18
+      },
+      {
+        "key": "RAIL",
+        "count": 16
+      },
+      {
+        "key": "IRON_INGOT",
+        "count": 15
+      },
+      {
+        "key": "IRON_TRAPDOOR",
+        "count": 15
+      },
+      {
+        "key": "STICK",
+        "count": 14
+      },
+      {
+        "key": "OAK_LOG",
+        "count": 14
+      }
+    ]
+  },
+  "unknownGain": {
+    "total": 504,
+    "lowValueCount": 461,
+    "lowValuePercent": 91.5,
+    "byMaterial": [
+      {
+        "key": "STONE_BRICKS",
+        "count": 27
+      },
+      {
+        "key": "STONE",
+        "count": 25
+      },
+      {
+        "key": "SHULKER_BOX",
+        "count": 19
+      },
+      {
+        "key": "GRASS_BLOCK",
+        "count": 17
+      },
+      {
+        "key": "POLISHED_DIORITE",
+        "count": 16
+      },
+      {
+        "key": "CHORUS_FRUIT",
+        "count": 15
+      },
+      {
+        "key": "SANDSTONE",
+        "count": 15
+      },
+      {
+        "key": "COBBLESTONE",
+        "count": 14
+      },
+      {
+        "key": "SMOOTH_STONE",
+        "count": 14
+      },
+      {
+        "key": "DIRT",
+        "count": 14
+      },
+      {
+        "key": "QUARTZ_BLOCK",
+        "count": 14
+      },
+      {
+        "key": "COOKED_PORKCHOP",
+        "count": 13
+      },
+      {
+        "key": "LEVER",
+        "count": 11
+      },
+      {
+        "key": "STICK",
+        "count": 10
+      },
+      {
+        "key": "COAL",
+        "count": 9
+      },
+      {
+        "key": "IRON_INGOT",
+        "count": 9
+      },
+      {
+        "key": "PALE_OAK_LOG",
+        "count": 9
+      },
+      {
+        "key": "RAIL",
+        "count": 8
+      },
+      {
+        "key": "WHITE_STAINED_GLASS_PANE",
+        "count": 8
+      },
+      {
+        "key": "END_ROD",
+        "count": 8
+      },
+      {
+        "key": "BUCKET",
+        "count": 8
+      },
+      {
+        "key": "DIAMOND_SHOVEL",
+        "count": 8
+      },
+      {
+        "key": "FIREWORK_ROCKET",
+        "count": 7
+      },
+      {
+        "key": "NETHERITE_PICKAXE",
+        "count": 7
+      },
+      {
+        "key": "BAKED_POTATO",
+        "count": 7
+      }
+    ],
+    "byValueBucket": {
+      "low": 461,
+      "high": 32,
+      "extreme": 8,
+      "medium": 3
+    },
+    "byAmountBucket": {
+      "1": 186,
+      "17-64": 231,
+      "2-16": 85,
+      "65-256": 2
+    },
+    "byPlayer": [
+      {
+        "key": "player-3",
+        "count": 119
+      },
+      {
+        "key": "player-7",
+        "count": 118
+      },
+      {
+        "key": "player-2",
+        "count": 102
+      },
+      {
+        "key": "player-4",
+        "count": 71
+      },
+      {
+        "key": "player-5",
+        "count": 66
+      },
+      {
+        "key": "player-6",
+        "count": 28
+      }
+    ],
+    "nearKnownSource": {
+      "250": {
+        "unknownTotal": 504,
+        "unknownNearKnownSource": 252,
+        "percent": 50,
+        "bySource": {
+          "DOUBLE_CHEST": 129,
+          "SHULKER_BOX": 44,
+          "WORKBENCH": 41,
+          "STONECUTTER": 13,
+          "BARREL": 13,
+          "CHEST": 5,
+          "FURNACE": 5,
+          "DISPENSER": 2
+        }
+      },
+      "500": {
+        "unknownTotal": 504,
+        "unknownNearKnownSource": 267,
+        "percent": 53,
+        "bySource": {
+          "DOUBLE_CHEST": 132,
+          "SHULKER_BOX": 49,
+          "WORKBENCH": 42,
+          "BARREL": 14,
+          "STONECUTTER": 13,
+          "FURNACE": 7,
+          "CHEST": 6,
+          "DISPENSER": 3,
+          "CRAFTING": 1
+        }
+      },
+      "1000": {
+        "unknownTotal": 504,
+        "unknownNearKnownSource": 301,
+        "percent": 59.7,
+        "bySource": {
+          "DOUBLE_CHEST": 140,
+          "SHULKER_BOX": 60,
+          "WORKBENCH": 49,
+          "STONECUTTER": 14,
+          "BARREL": 14,
+          "FURNACE": 10,
+          "CHEST": 8,
+          "DISPENSER": 3,
+          "GROUND_PICKUP": 2,
+          "CRAFTING": 1
+        }
+      },
+      "2000": {
+        "unknownTotal": 504,
+        "unknownNearKnownSource": 333,
+        "percent": 66.1,
+        "bySource": {
+          "DOUBLE_CHEST": 150,
+          "SHULKER_BOX": 71,
+          "WORKBENCH": 52,
+          "STONECUTTER": 14,
+          "BARREL": 14,
+          "FURNACE": 10,
+          "CHEST": 9,
+          "GROUND_PICKUP": 5,
+          "CRAFTING": 4,
+          "DISPENSER": 3,
+          "CONTAINER": 1
+        }
+      },
+      "3000": {
+        "unknownTotal": 504,
+        "unknownNearKnownSource": 360,
+        "percent": 71.4,
+        "bySource": {
+          "DOUBLE_CHEST": 152,
+          "SHULKER_BOX": 80,
+          "WORKBENCH": 54,
+          "GROUND_PICKUP": 14,
+          "STONECUTTER": 14,
+          "BARREL": 13,
+          "FURNACE": 12,
+          "CHEST": 9,
+          "CRAFTING": 7,
+          "DISPENSER": 3,
+          "CONTAINER": 2
+        }
+      }
+    }
+  },
+  "scanner": {
+    "rawRows": 218,
+    "rawFindingOccurrences": 218,
+    "uniqueFindingKeys": 8,
+    "repeatMultiplier": 27.25,
+    "topRepeats": [
+      {
+        "player": "player-3",
+        "material": "NETHERITE_BOOTS",
+        "findingType": "CONFLICTING_ENCHANTMENTS",
+        "type": "SUSPICIOUS_ITEM",
+        "count": 51,
+        "signature": "present"
+      },
+      {
+        "player": "player-4",
+        "material": "CHAINMAIL_LEGGINGS",
+        "findingType": "CONFLICTING_ENCHANTMENTS",
+        "type": "SUSPICIOUS_ITEM",
+        "count": 40,
+        "signature": "present"
+      },
+      {
+        "player": "player-4",
+        "material": "SHULKER_BOX",
+        "findingType": "SUSPICIOUS_CONTAINER_CONTENTS",
+        "type": "SUSPICIOUS_ITEM",
+        "count": 40,
+        "signature": "present"
+      },
+      {
+        "player": "player-3",
+        "material": "NETHERITE_BOOTS",
+        "findingType": "CONFLICTING_ENCHANTMENTS",
+        "type": "SUSPICIOUS_ITEM",
+        "count": 39,
+        "signature": "present"
+      },
+      {
+        "player": "player-4",
+        "material": "TURTLE_HELMET",
+        "findingType": "CONFLICTING_ENCHANTMENTS",
+        "type": "SUSPICIOUS_ITEM",
+        "count": 21,
+        "signature": "present"
+      },
+      {
+        "player": "player-4",
+        "material": "SHULKER_BOX",
+        "findingType": "SUSPICIOUS_CONTAINER_CONTENTS",
+        "type": "SUSPICIOUS_ITEM",
+        "count": 21,
+        "signature": "present"
+      },
+      {
+        "player": "player-4",
+        "material": "TURTLE_HELMET",
+        "findingType": "CONFLICTING_ENCHANTMENTS",
+        "type": "SUSPICIOUS_ITEM",
+        "count": 3,
+        "signature": "present"
+      },
+      {
+        "player": "player-4",
+        "material": "SHULKER_BOX",
+        "findingType": "SUSPICIOUS_CONTAINER_CONTENTS",
+        "type": "SUSPICIOUS_ITEM",
+        "count": 3,
+        "signature": "present"
+      }
+    ]
+  },
+  "saturation": {
+    "players": 6,
+    "playersWhoHit100": 6,
+    "topPlayers": [
+      {
+        "player": "player-3",
+        "alerts": 803,
+        "firstGe60Ms": 1789179217048,
+        "firstGe80Ms": 1789179217147,
+        "firstEq100Ms": 1789179217147,
+        "alertsAfterFirst100": 802,
+        "minutesFromFirst60ToLast": 373.6
+      },
+      {
+        "player": "player-7",
+        "alerts": 722,
+        "firstGe60Ms": 1789189663297,
+        "firstGe80Ms": 1789189663897,
+        "firstEq100Ms": 1789189663897,
+        "alertsAfterFirst100": 720,
+        "minutesFromFirst60ToLast": 197.7
+      },
+      {
+        "player": "player-2",
+        "alerts": 678,
+        "firstGe60Ms": 1789175851952,
+        "firstGe80Ms": 1789175851998,
+        "firstEq100Ms": 1789175858498,
+        "alertsAfterFirst100": 675,
+        "minutesFromFirst60ToLast": 77
+      },
+      {
+        "player": "player-4",
+        "alerts": 650,
+        "firstGe60Ms": 1789179441400,
+        "firstGe80Ms": 1789179441400,
+        "firstEq100Ms": 1789179441400,
+        "alertsAfterFirst100": 650,
+        "minutesFromFirst60ToLast": 251.7
+      },
+      {
+        "player": "player-5",
+        "alerts": 456,
+        "firstGe60Ms": 1789182476947,
+        "firstGe80Ms": 1789182476947,
+        "firstEq100Ms": 1789182483148,
+        "alertsAfterFirst100": 452,
+        "minutesFromFirst60ToLast": 319.2
+      },
+      {
+        "player": "player-6",
+        "alerts": 114,
+        "firstGe60Ms": 1789189028147,
+        "firstGe80Ms": 1789189028147,
+        "firstEq100Ms": 1789189028501,
+        "alertsAfterFirst100": 113,
+        "minutesFromFirst60ToLast": 21.9
+      }
+    ]
+  },
+  "highValueBurst": {
+    "alertRowsMentioningBurst": 54,
+    "lowValueHighAmount": [
+      {
+        "player": "player-2",
+        "material": "STONE_BRICKS",
+        "amount": 64,
+        "itemValue": 1,
+        "riskScore": 75,
+        "sourceClass": "CHEST",
+        "reasons": [
+          "278 items gained within 5.0s"
+        ]
+      },
+      {
+        "player": "player-2",
+        "material": "STONE_BRICKS",
+        "amount": 128,
+        "itemValue": 1,
+        "riskScore": 85,
+        "sourceClass": "CHEST",
+        "reasons": [
+          "278 items gained within 5.0s",
+          "342 items gained within 5.0s"
+        ]
+      },
+      {
+        "player": "player-2",
+        "material": "STONE",
+        "amount": 64,
+        "itemValue": 1,
+        "riskScore": 100,
+        "sourceClass": "OTHER",
+        "reasons": [
+          "260 items gained within 5.0s"
+        ]
+      },
+      {
+        "player": "player-2",
+        "material": "COBBLESTONE",
+        "amount": 64,
+        "itemValue": 1,
+        "riskScore": 100,
+        "sourceClass": "OTHER",
+        "reasons": [
+          "278 items gained within 5.0s"
+        ]
+      },
+      {
+        "player": "player-3",
+        "material": "POWERED_RAIL",
+        "amount": 64,
+        "itemValue": 1,
+        "riskScore": 70,
+        "sourceClass": "DOUBLE_CHEST",
+        "reasons": [
+          "320 items gained within 5.0s",
+          "128 RAIL gained within 10.0s"
+        ]
+      },
+      {
+        "player": "player-3",
+        "material": "POWERED_RAIL",
+        "amount": 128,
+        "itemValue": 1,
+        "riskScore": 100,
+        "sourceClass": "DOUBLE_CHEST",
+        "reasons": [
+          "320 items gained within 5.0s",
+          "128 RAIL gained within 10.0s",
+          "384 items gained within 5.0s"
+        ]
+      },
+      {
+        "player": "player-4",
+        "material": "IRON_INGOT",
+        "amount": 64,
+        "itemValue": 1,
+        "riskScore": 64,
+        "sourceClass": "SHULKER_BOX",
+        "reasons": [
+          "304 items gained within 5.0s"
+        ]
+      },
+      {
+        "player": "player-4",
+        "material": "IRON_INGOT",
+        "amount": 128,
+        "itemValue": 1,
+        "riskScore": 86,
+        "sourceClass": "SHULKER_BOX",
+        "reasons": [
+          "304 items gained within 5.0s"
+        ]
+      },
+      {
+        "player": "player-4",
+        "material": "IRON_INGOT",
+        "amount": 64,
+        "itemValue": 1,
+        "riskScore": 66,
+        "sourceClass": "SHULKER_BOX",
+        "reasons": [
+          "256 items gained within 5.0s"
+        ]
+      },
+      {
+        "player": "player-4",
+        "material": "IRON_INGOT",
+        "amount": 64,
+        "itemValue": 1,
+        "riskScore": 64,
+        "sourceClass": "SHULKER_BOX",
+        "reasons": [
+          "320 items gained within 5.0s"
+        ]
+      },
+      {
+        "player": "player-7",
+        "material": "DIRT",
+        "amount": 64,
+        "itemValue": 1,
+        "riskScore": 70,
+        "sourceClass": "DOUBLE_CHEST",
+        "reasons": [
+          "444 items gained within 5.0s",
+          "422 DIRT gained within 10.0s"
+        ]
+      },
+      {
+        "player": "player-7",
+        "material": "DIRT",
+        "amount": 128,
+        "itemValue": 1,
+        "riskScore": 100,
+        "sourceClass": "DOUBLE_CHEST",
+        "reasons": [
+          "444 items gained within 5.0s",
+          "422 DIRT gained within 10.0s",
+          "506 items gained within 5.0s"
+        ]
+      },
+      {
+        "player": "player-7",
+        "material": "DIRT",
+        "amount": 64,
+        "itemValue": 1,
+        "riskScore": 100,
+        "sourceClass": "DOUBLE_CHEST",
+        "reasons": [
+          "708 items gained within 5.0s",
+          "11 EMERALD gained within 10.0s"
+        ]
+      },
+      {
+        "player": "player-7",
+        "material": "POLISHED_DIORITE",
+        "amount": 192,
+        "itemValue": 1,
+        "riskScore": 96,
+        "sourceClass": "SHULKER_BOX",
+        "reasons": [
+          "256 items gained within 5.0s"
+        ]
+      },
+      {
+        "player": "player-5",
+        "material": "STONE",
+        "amount": 64,
+        "itemValue": 1,
+        "riskScore": 87,
+        "sourceClass": "SHULKER_BOX",
+        "reasons": [
+          "319 items gained within 5.0s"
+        ]
+      },
+      {
+        "player": "player-5",
+        "material": "STONE",
+        "amount": 64,
+        "itemValue": 1,
+        "riskScore": 100,
+        "sourceClass": "SHULKER_BOX",
+        "reasons": [
+          "320 items gained within 5.0s",
+          "703 STONE gained within 10.0s"
+        ]
+      },
+      {
+        "player": "player-7",
+        "material": "SAND",
+        "amount": 64,
+        "itemValue": 1,
+        "riskScore": 66,
+        "sourceClass": "SHULKER_BOX",
+        "reasons": [
+          "256 items gained within 5.0s"
+        ]
+      },
+      {
+        "player": "player-7",
+        "material": "SAND",
+        "amount": 128,
+        "itemValue": 1,
+        "riskScore": 88,
+        "sourceClass": "SHULKER_BOX",
+        "reasons": [
+          "256 items gained within 5.0s",
+          "320 items gained within 5.0s"
+        ]
+      },
+      {
+        "player": "player-7",
+        "material": "SAND",
+        "amount": 64,
+        "itemValue": 1,
+        "riskScore": 100,
+        "sourceClass": "SHULKER_BOX",
+        "reasons": [
+          "1280 items gained within 5.0s",
+          "1728 SAND gained within 10.0s"
+        ]
+      },
+      {
+        "player": "player-7",
+        "material": "SAND",
+        "amount": 64,
+        "itemValue": 1,
+        "riskScore": 100,
+        "sourceClass": "SHULKER_BOX",
+        "reasons": [
+          "256 items gained within 5.0s",
+          "528 SANDSTONE gained within 10.0s"
+        ]
+      },
+      {
+        "player": "player-7",
+        "material": "SAND",
+        "amount": 64,
+        "itemValue": 1,
+        "riskScore": 100,
+        "sourceClass": "SHULKER_BOX",
+        "reasons": [
+          "1280 items gained within 5.0s",
+          "192 SANDSTONE gained within 10.0s"
+        ]
+      },
+      {
+        "player": "player-7",
+        "material": "SANDSTONE",
+        "amount": 64,
+        "itemValue": 1,
+        "riskScore": 78,
+        "sourceClass": "SHULKER_BOX",
+        "reasons": [
+          "288 items gained within 5.0s"
+        ]
+      },
+      {
+        "player": "player-7",
+        "material": "SANDSTONE",
+        "amount": 128,
+        "itemValue": 1,
+        "riskScore": 100,
+        "sourceClass": "SHULKER_BOX",
+        "reasons": [
+          "288 items gained within 5.0s",
+          "352 items gained within 5.0s"
+        ]
+      },
+      {
+        "player": "player-7",
+        "material": "SANDSTONE",
+        "amount": 64,
+        "itemValue": 1,
+        "riskScore": 100,
+        "sourceClass": "SHULKER_BOX",
+        "reasons": [
+          "1088 items gained within 5.0s",
+          "1376 SANDSTONE gained within 10.0s"
+        ]
+      },
+      {
+        "player": "player-7",
+        "material": "SANDSTONE",
+        "amount": 64,
+        "itemValue": 1,
+        "riskScore": 100,
+        "sourceClass": "SHULKER_BOX",
+        "reasons": [
+          "1344 items gained within 5.0s",
+          "1408 SANDSTONE gained within 10.0s"
+        ]
+      },
+      {
+        "player": "player-7",
+        "material": "CUT_SANDSTONE",
+        "amount": 256,
+        "itemValue": 1,
+        "riskScore": 100,
+        "sourceClass": "CRAFTING",
+        "reasons": [
+          "256 items gained within 5.0s",
+          "256 CUT_SANDSTONE gained within 10.0s"
+        ]
+      },
+      {
+        "player": "player-7",
+        "material": "CUT_SANDSTONE",
+        "amount": 256,
+        "itemValue": 1,
+        "riskScore": 100,
+        "sourceClass": "CRAFTING",
+        "reasons": [
+          "288 items gained within 5.0s",
+          "512 CUT_SANDSTONE gained within 10.0s"
+        ]
+      },
+      {
+        "player": "player-7",
+        "material": "CUT_SANDSTONE",
+        "amount": 256,
+        "itemValue": 1,
+        "riskScore": 100,
+        "sourceClass": "CRAFTING",
+        "reasons": [
+          "256 items gained within 5.0s",
+          "512 CUT_SANDSTONE gained within 10.0s"
+        ]
+      },
+      {
+        "player": "player-7",
+        "material": "COBBLED_DEEPSLATE",
+        "amount": 64,
+        "itemValue": 1,
+        "riskScore": 65,
+        "sourceClass": "DOUBLE_CHEST",
+        "reasons": [
+          "256 items gained within 5.0s"
+        ]
+      },
+      {
+        "player": "player-7",
+        "material": "COBBLED_DEEPSLATE",
+        "amount": 192,
+        "itemValue": 1,
+        "riskScore": 85,
+        "sourceClass": "DOUBLE_CHEST",
+        "reasons": [
+          "256 items gained within 5.0s",
+          "320 items gained within 5.0s",
+          "384 items gained within 5.0s"
+        ]
+      }
+    ],
+    "lowValueHighAmountCount": 33
+  },
+  "shulker": {
+    "alertsMentioningShulker": 156
+  },
+  "findings": [
+    {
+      "id": "P0-ALERT-SPAM",
+      "status": "Confirmed design problem",
+      "title": "Alert volume vs unique players",
+      "detail": "3423 alerts. Star/+0 rows=2314. This matches threshold-reached spam if current risk stays high."
+    },
+    {
+      "id": "P0-COMPONENT-RISK",
+      "status": "Confirmed design problem",
+      "title": "COMPONENT_MODIFIED / custom metadata in alert reasons",
+      "detail": "COMPONENT_MODIFIED category count=659. Field alerts cite enchanted/named/damaged components on ordinary chest loot."
+    },
+    {
+      "id": "P0-SCANNER-REPEAT",
+      "status": "Confirmed design problem",
+      "title": "Scanner finding repeats",
+      "detail": "raw finding occurrences=218 unique keys=8"
+    },
+    {
+      "id": "P0-UNKNOWN-NEAR-KNOWN",
+      "status": "Strong suspicion",
+      "title": "UNKNOWN_GAIN near logged known sources",
+      "detail": "At ±3s: 71.4% of UNKNOWN share player+material with a logged known-source event. Forensic logs do not include every ordinary flow, so this is a lower bound."
+    },
+    {
+      "id": "P0-DIRT-BURST",
+      "status": "Confirmed design problem",
+      "title": "Low item-value HIGH_VALUE/RAPID burst language",
+      "detail": "Alerts whose material item-value<=5 and amount>=64 while reasons mention gained-within: 33"
+    },
+    {
+      "id": "P0-SATURATION",
+      "status": "Confirmed design problem",
+      "title": "Sticky risk saturation",
+      "detail": "6 anonymized players reached risk 100; subsequent alerts continue while score stays high."
+    }
+  ]
+}

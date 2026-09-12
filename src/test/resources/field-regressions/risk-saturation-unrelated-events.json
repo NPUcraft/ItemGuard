@@ -1,0 +1,8 @@
+{
+  "id": "risk-saturation-unrelated-events",
+  "kind": "FIELD-DERIVED REGRESSION",
+  "player": "player-1",
+  "uuid": "00000000-0000-4000-8000-000000000001",
+  "note": "Suspicious boots plus verified shulker plus stone pickup must not sum into one player score.",
+  "expectMaxNotSum": true
+}

@@ -39,16 +39,11 @@ flow-source-shulker: "<gray>↳ <light_purple>Shulker Box</light_purple> → <wh
 alert-title: "<red>⚠ ItemGuard Alert"
 alert-body: |-
   <gray>Player: <white><player></white>
-  Item: <white><item></white>
-  Amount gained: <green>+<amount></green>
-  Time: <white><window></white>
-
-  Source:
-  <white><source></white>
-
-  Risk: <gold><risk></gold><gray>/100</gray>
-
-  Reason:
+  Incident: <white><incident></white>
+  Risk: <gold><risk></gold><gray>/100 <level></gray>
+  Item: <white><item></white> <green>+<amount></green>
+  Source: <white><source></white>
+  Evidence:
   <white><reason></white>
 alert-inspect: "<aqua>[Inspect]"
 alert-trace: "<yellow>[Trace]"

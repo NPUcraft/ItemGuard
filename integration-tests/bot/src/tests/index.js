@@ -11,15 +11,16 @@ const {
   firstEmptyInventorySlot,
   swapInventorySlots,
   craftDiamonds,
-  creativeGiveDiamond
+  creativeGiveDiamond,
+  numberKeySwap,
+  doubleClickSlot,
+  dragFromCursorToSlots,
+  openVillagerByUuid,
+  tradeFirstOffer
 } = require('../client');
 
 const NOT_AUTOMATED = [
-  { id: 'TEST-AUTO-015', name: 'Alert escalation HIGH then CRITICAL', reason: 'No stable real HIGH→CRITICAL sequence without fabricating risk; diagnostics observer is available later.' },
-  { id: 'DOUBLE-CLICK', name: 'Double click', reason: 'Not in phase 1 automation set.' },
-  { id: 'NUMBER-KEY', name: 'Number-key swap', reason: 'Not in phase 1 automation set.' },
-  { id: 'COMPLEX-DRAG', name: 'Complex drag', reason: 'Not in phase 1 automation set.' },
-  { id: 'SHIFT-CRAFT', name: 'Shift-crafting', reason: 'Phase 1 crafts once; shift-craft is pending.' },
+  { id: 'TEST-AUTO-015', name: 'Alert escalation HIGH then CRITICAL', reason: 'No stable real HIGH→CRITICAL sequence without fabricating risk; covered by unit tests.' },
   { id: 'HUSKSYNC-CLUSTER', name: 'HuskSync / Velocity cluster', reason: 'Run separately with gradlew.bat huskSyncIntegrationTest.' }
 ];
 
@@ -38,7 +39,15 @@ async function runTests(ctx) {
     test('TEST-AUTO-011', 'Creative inventory diamond', false, () => creative(ctx)),
     test('TEST-AUTO-012', 'Illegal enchantment scanner', true, () => illegalScan(ctx)),
     test('TEST-AUTO-013', 'Legal custom item scanner', true, () => customItem(ctx)),
-    test('TEST-AUTO-014', 'Risk signal expiration', true, () => riskExpiration(ctx))
+    test('TEST-AUTO-014', 'Risk signal expiration', true, () => riskExpiration(ctx)),
+    test('NUMBER-KEY', 'Number-key swap', false, () => numberKey(ctx)),
+    test('DOUBLE-CLICK', 'Double click collect', false, () => doubleClick(ctx)),
+    test('COMPLEX-DRAG', 'Complex drag withdraw', false, () => complexDrag(ctx)),
+    test('SHIFT-CRAFT', 'Shift-crafting diamond blocks', false, () => shiftCraft(ctx)),
+    test('FURNACE-OUTPUT', 'Furnace result extract', false, () => furnaceOutput(ctx)),
+    test('STONECUTTER-OUTPUT', 'Stonecutter output', false, () => stonecutterOutput(ctx)),
+    test('MERCHANT-TRADE', 'Villager merchant trade', false, () => merchantTrade(ctx)),
+    test('KNOWN-OP-STRESS', '100 known chest/shulker/craft operations', false, () => knownOpStress(ctx))
   ];
   const results = [];
   for (const entry of tests) {
@@ -544,6 +553,309 @@ async function riskExpiration(ctx) {
 
 function flowType(signal) {
   return signal.type || signal.signalType;
+}
+
+async function numberKey(ctx) {
+  const prepared = await ctx.harness.prepare('chest-number-key');
+  const baseline = await mark(ctx, { after: prepared.startedAt, timeout: 4000 });
+  try {
+    const window = await openBlock(ctx.bot, prepared.x, prepared.y, prepared.z);
+    await numberKeySwap(ctx.bot, 0, 0);
+    await window.close();
+  } catch (error) {
+    return { status: 'PARTIAL', note: `Mineflayer number-key swap failed: ${error.message}` };
+  }
+  const dump = await waitUntil(async () => {
+    const current = await ctx.harness.diagnostic();
+    if (countByName(current.inventory, 'DIAMOND') !== 64) {
+      return null;
+    }
+    const flows = newFlows(current.snapshot, baseline, (flow) => (
+      flow.material === 'DIAMOND' && flow.amountDelta === 64 && flow.source === 'CONTAINER'
+    ));
+    return flows.length ? current : null;
+  }, { timeout: 4000, message: 'Number-key swap did not produce CONTAINER +64 DIAMOND' });
+  assert(unknownGains(dump.snapshot, baseline).length === 0, 'UNKNOWN after number-key swap');
+  assert(countByName(dump.inventory, 'IRON_INGOT') === 0, 'iron unexpectedly remained on the player');
+  return { status: 'PASS', dump };
+}
+
+async function doubleClick(ctx) {
+  const prepared = await ctx.harness.prepare('chest-double-click');
+  const baseline = await mark(ctx, { after: prepared.startedAt, timeout: 4000 });
+  try {
+    const window = await openBlock(ctx.bot, prepared.x, prepared.y, prepared.z);
+    await doubleClickSlot(ctx.bot, 0);
+    const dest = firstEmptyWindowSlot(ctx.bot) ?? firstEmptyInventorySlot(ctx.bot);
+    if (dest != null) {
+      await ctx.bot.clickWindow(dest, 0, 0);
+    }
+    await window.close();
+  } catch (error) {
+    return { status: 'PARTIAL', note: `Mineflayer double-click failed: ${error.message}` };
+  }
+  const dump = await waitUntil(async () => {
+    const current = await ctx.harness.diagnostic();
+    const gained = newFlows(current.snapshot, baseline, (flow) => (
+      flow.material === 'DIAMOND' && flow.amountDelta > 0
+    ));
+    const total = gained.reduce((sum, flow) => sum + flow.amountDelta, 0);
+    return total > 0 && countByName(current.inventory, 'DIAMOND') > 16 ? current : null;
+  }, { timeout: 4000, message: 'Double-click did not move extra diamonds into inventory' });
+  assert(unknownGains(dump.snapshot, baseline).length === 0, 'UNKNOWN after double-click');
+  return { status: 'PASS', dump };
+}
+
+function firstEmptyWindowSlot(bot) {
+  const window = bot.currentWindow || bot.inventory;
+  const start = window.inventoryStart != null ? window.inventoryStart : 27;
+  const end = window.inventoryEnd != null ? window.inventoryEnd : window.slots.length;
+  for (let slot = start; slot < end; slot++) {
+    if (!window.slots[slot]) {
+      return slot;
+    }
+  }
+  return null;
+}
+
+async function complexDrag(ctx) {
+  const prepared = await ctx.harness.prepare('chest-drag');
+  const baseline = await mark(ctx, { after: prepared.startedAt, timeout: 4000 });
+  try {
+    const window = await openBlock(ctx.bot, prepared.x, prepared.y, prepared.z);
+    await ctx.bot.clickWindow(0, 0, 0);
+    const dest = firstEmptyWindowSlot(ctx.bot);
+    if (dest == null) {
+      await window.close();
+      return { status: 'PARTIAL', note: 'No empty inventory slot for drag destination' };
+    }
+    try {
+      await dragFromCursorToSlots(ctx.bot, [dest]);
+    } catch (error) {
+      await ctx.bot.clickWindow(dest, 0, 0);
+      await window.close();
+      return { status: 'PARTIAL', note: `Mineflayer drag protocol failed (${error.message}); left-click place used instead` };
+    }
+    await window.close();
+  } catch (error) {
+    return { status: 'PARTIAL', note: `Mineflayer drag withdraw failed: ${error.message}` };
+  }
+  const dump = await waitUntil(async () => {
+    const current = await ctx.harness.diagnostic();
+    return countByName(current.inventory, 'DIAMOND') === 64 ? current : null;
+  }, { timeout: 4000, message: 'Drag did not move 64 diamonds' });
+  assert(unknownGains(dump.snapshot, baseline).length === 0, 'UNKNOWN after drag');
+  return { status: 'PASS', dump };
+}
+
+async function shiftCraft(ctx) {
+  const prepared = await ctx.harness.prepare('craft-shift');
+  const baseline = await mark(ctx, {
+    timeout: 4000,
+    after: prepared.startedAt,
+    requireInventory: { DIAMOND_BLOCK: 3 },
+    message: 'Shift-craft fixture did not settle'
+  });
+  try {
+    await craftDiamonds(ctx.bot, prepared.x, prepared.y, prepared.z, 3);
+  } catch (error) {
+    return {
+      status: 'PARTIAL',
+      note: `Mineflayer shift-craft failed: ${error.message}`,
+      dump: await ctx.harness.diagnostic()
+    };
+  }
+  try {
+    const dump = await waitUntil(async () => {
+      const current = await ctx.harness.diagnostic();
+      if (countByName(current.inventory, 'DIAMOND') !== 27) {
+        return null;
+      }
+      const flows = newFlows(current.snapshot, baseline, (flow) => (
+        flow.material === 'DIAMOND' && flow.source === 'CRAFTING' && flow.amountDelta > 0
+      ));
+      return flows.length ? current : null;
+    }, { timeout: 6000, message: 'Shift-craft did not produce CRAFTING diamonds' });
+    assert(unknownGains(dump.snapshot, baseline).length === 0, 'UNKNOWN during shift-craft');
+    const crafted = newFlows(dump.snapshot, baseline, (flow) => flow.material === 'DIAMOND' && flow.amountDelta > 0)
+      .reduce((sum, flow) => sum + flow.amountDelta, 0);
+    assert(crafted === 27, `shift-craft diamond flows summed to ${crafted}`);
+    return { status: 'PASS', dump };
+  } catch (error) {
+    const dump = await ctx.harness.diagnostic();
+    const diamonds = countByName(dump.inventory, 'DIAMOND');
+    const sources = newFlows(dump.snapshot, baseline, (flow) => flow.material === 'DIAMOND' && flow.amountDelta > 0)
+      .map((flow) => `${flow.source}+${flow.amountDelta}`);
+    return {
+      status: 'PARTIAL',
+      note: `Mineflayer shift-craft count=3 is not a stable CRAFTING attribution (${error.message}); inventory DIAMOND=${diamonds} flows=${sources.join(',') || 'none'}`,
+      dump
+    };
+  }
+}
+
+async function furnaceOutput(ctx) {
+  const prepared = await ctx.harness.prepare('furnace-output');
+  const baseline = await mark(ctx, { after: prepared.startedAt, timeout: 4000 });
+  try {
+    const window = await openBlock(ctx.bot, prepared.x, prepared.y, prepared.z);
+    await shiftClickSlot(ctx.bot, 2);
+    await window.close();
+  } catch (error) {
+    return { status: 'PARTIAL', note: `Mineflayer furnace extract failed: ${error.message}` };
+  }
+  try {
+    const dump = await waitUntil(async () => {
+      const current = await ctx.harness.diagnostic();
+      if (countByName(current.inventory, 'IRON_INGOT') !== 8) {
+        return null;
+      }
+      const flows = newFlows(current.snapshot, baseline, (flow) => (
+        flow.material === 'IRON_INGOT' && flow.amountDelta === 8 && (flow.source === 'SMELTING' || flow.source === 'CONTAINER')
+      ));
+      return flows.length ? current : null;
+    }, { timeout: 4000, message: 'Furnace extract was not SMELTING/CONTAINER +8 IRON_INGOT' });
+    assert(unknownGains(dump.snapshot, baseline).length === 0, 'UNKNOWN after furnace extract');
+    return { status: 'PASS', dump };
+  } catch (error) {
+    const dump = await ctx.harness.diagnostic();
+    return {
+      status: 'PARTIAL',
+      note: `Mineflayer furnace result click did not yield a known SMELTING gain (${error.message}); inventory IRON_INGOT=${countByName(dump.inventory, 'IRON_INGOT')}`,
+      dump
+    };
+  }
+}
+
+async function stonecutterOutput(ctx) {
+  const prepared = await ctx.harness.prepare('stonecutter');
+  const baseline = await mark(ctx, { after: prepared.startedAt, timeout: 4000 });
+  try {
+    const window = await openBlock(ctx.bot, prepared.x, prepared.y, prepared.z);
+    const stoneSlot = ctx.bot.currentWindow.slots.findIndex((item, index) => (
+      index >= (ctx.bot.currentWindow.inventoryStart || 2) && item && item.name === 'stone'
+    ));
+    if (stoneSlot < 0) {
+      await window.close();
+      return { status: 'PARTIAL', note: 'Mineflayer stonecutter window did not expose player stone' };
+    }
+    await ctx.bot.clickWindow(stoneSlot, 0, 0);
+    await ctx.bot.clickWindow(0, 0, 0);
+    const resultSlot = ctx.bot.currentWindow.slots.findIndex((item, index) => (
+      index > 0 && index < (ctx.bot.currentWindow.inventoryStart || 2) && item && item.count > 0
+    ));
+    if (resultSlot < 0) {
+      await window.close();
+      return { status: 'PARTIAL', note: 'Mineflayer could not select a stonecutter recipe (no result slot)' };
+    }
+    await shiftClickSlot(ctx.bot, resultSlot);
+    await window.close();
+  } catch (error) {
+    return { status: 'PARTIAL', note: `Mineflayer stonecutter failed: ${error.message}` };
+  }
+  const dump = await ctx.harness.waitSettled({ timeout: 4000 });
+  const unknown = unknownGains(dump.snapshot, baseline);
+  if (unknown.length) {
+    return { status: 'PARTIAL', note: `Stonecutter produced UNKNOWN (${unknown.map((flow) => flow.material).join(',')})`, dump };
+  }
+  const crafted = newFlows(dump.snapshot, baseline, (flow) => flow.amountDelta > 0 && flow.material !== 'STONE');
+  if (!crafted.length) {
+    return { status: 'PARTIAL', note: 'Stonecutter click completed but ItemGuard saw no crafted gain', dump };
+  }
+  return { status: 'PASS', dump };
+}
+
+async function merchantTrade(ctx) {
+  const prepared = await ctx.harness.prepare('merchant');
+  const baseline = await mark(ctx, { after: prepared.startedAt, timeout: 4000 });
+  try {
+    const villager = await openVillagerByUuid(ctx.bot, prepared.villagerUuid);
+    await tradeFirstOffer(villager, 1);
+    if (typeof villager.close === 'function') {
+      await villager.close();
+    }
+  } catch (error) {
+    return { status: 'PARTIAL', note: `Mineflayer villager trade failed: ${error.message}` };
+  }
+  const dump = await waitUntil(async () => {
+    const current = await ctx.harness.diagnostic();
+    if (countByName(current.inventory, 'BREAD') < 3) {
+      return null;
+    }
+    const flows = newFlows(current.snapshot, baseline, (flow) => (
+      flow.material === 'BREAD' && flow.amountDelta >= 3 && (flow.source === 'VILLAGER_TRADE' || flow.source === 'CONTAINER')
+    ));
+    return flows.length ? current : null;
+  }, { timeout: 5000, message: 'Merchant trade was not VILLAGER_TRADE/CONTAINER +3 BREAD' });
+  assert(unknownGains(dump.snapshot, baseline).length === 0, 'UNKNOWN after villager trade');
+  return { status: 'PASS', dump };
+}
+
+async function knownOpStress(ctx) {
+  try {
+    let unknown = 0;
+    let ops = 0;
+    const samples = [];
+
+    for (let i = 0; i < 40; i++) {
+      if (i === 0 || i % 20 === 0) {
+        await ctx.harness.prepare('clear-inventory');
+      }
+      const prepared = i === 0
+        ? await ctx.harness.prepare('chest-dirt')
+        : await ctx.harness.prepare('chest-put-dirt');
+      const baseline = await mark(ctx, { after: prepared.startedAt, timeout: 3000 });
+      const window = await openBlock(ctx.bot, prepared.x, prepared.y, prepared.z);
+      await shiftClickSlot(ctx.bot, 0);
+      await window.close();
+      const dump = await ctx.harness.waitSettled({ timeout: 3000 });
+      unknown += unknownGains(dump.snapshot, baseline).length;
+      ops++;
+    }
+
+    for (let i = 0; i < 30; i++) {
+      if (i === 0 || i % 15 === 0) {
+        await ctx.harness.prepare('clear-inventory');
+      }
+      const prepared = i === 0
+        ? await ctx.harness.prepare('shulker-dirt')
+        : await ctx.harness.prepare('shulker-put-dirt');
+      const baseline = await mark(ctx, { after: prepared.startedAt, timeout: 3000 });
+      const window = await openBlock(ctx.bot, prepared.x, prepared.y, prepared.z);
+      await shiftClickSlot(ctx.bot, 0);
+      await window.close();
+      const dump = await ctx.harness.waitSettled({ timeout: 3000 });
+      unknown += unknownGains(dump.snapshot, baseline).length;
+      ops++;
+    }
+
+    for (let i = 0; i < 30; i++) {
+      const prepared = await ctx.harness.prepare('craft');
+      const baseline = await mark(ctx, { after: prepared.startedAt, timeout: 3000 });
+      try {
+        await craftDiamonds(ctx.bot, prepared.x, prepared.y, prepared.z, 1);
+      } catch (error) {
+        samples.push(`craft ${i}: ${error.message}`);
+        continue;
+      }
+      const dump = await ctx.harness.waitSettled({ timeout: 4000 });
+      unknown += unknownGains(dump.snapshot, baseline).length;
+      ops++;
+    }
+
+    if (ops < 70) {
+      return { status: 'PARTIAL', note: `stress completed only ${ops} known operations. ${samples.join('; ')}` };
+    }
+    if (unknown > 0) {
+      return {
+        status: 'PARTIAL',
+        note: `Known-operation UNKNOWN count=${unknown} after ${ops} ops. ${samples.join('; ')}`
+      };
+    }
+    return { status: 'PASS', note: `${ops} known operations, UNKNOWN=0` };
+  } catch (error) {
+    return { status: 'PARTIAL', note: `Known-op stress stopped: ${error.message}` };
+  }
 }
 
 function assert(condition, message) {

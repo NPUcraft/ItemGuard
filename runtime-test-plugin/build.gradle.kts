@@ -2,7 +2,7 @@ plugins {
     java
 }
 
-group = "dev.itemguard"
+group = "com.npucraft.itemguard"
 version = "1.0.0-test"
 description = "Manual acceptance helper for ItemGuard 1.0. Not a product plugin."
 

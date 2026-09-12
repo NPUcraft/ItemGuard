@@ -3,13 +3,22 @@
 
 debug: false
 
+# Off by default. When enabled, logs attribution decisions without dumping inventories.
+attribution-debug:
+  enabled: false
+  unknown-only: true
+
 reconciliation:
   # Dirty players are reconciled on this cadence (game ticks; 20 = 1 second).
   interval-ticks: 20
   # Silent-mutation pass. Also game ticks. With interval 20, 40 ≈ every 2 seconds.
   heartbeat-interval-ticks: 40
-  # How long an expected-flow credit can explain a later inventory gain.
+  # How long an exact expected-flow credit (pickup, furnace extract) can explain a later inventory gain.
   expected-flow-ttl-millis: 2500
+  # Source hints from GUI clicks. Tick-scale; must not explain later unrelated gains.
+  source-hint-ttl-millis: 250
+  # If a GUI hint is pending and the first reconcile cannot explain the diff, wait this many ticks.
+  attribution-grace-ticks: 1
   # Same-player inventory events in this window collapse into one reconcile.
   event-debounce-ticks: 1
   # Creative inventory creation is tagged CREATIVE_INVENTORY with risk 0. Scanner still works.

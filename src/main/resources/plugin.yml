@@ -1,8 +1,8 @@
 name: ItemGuard
 version: ${version}
-main: dev.itemguard.ItemGuardPlugin
+main: com.npucraft.itemguard.ItemGuardPlugin
 api-version: '1.21.8'
-author: ItemGuard
+author: NPUcraft
 description: ${description}
 softdepend:
   - HuskSync

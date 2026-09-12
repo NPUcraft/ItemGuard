@@ -1,0 +1,13 @@
+{
+  "id": "scanner-repeat-boots",
+  "kind": "FIELD-DERIVED REGRESSION",
+  "player": "player-1",
+  "uuid": "00000000-0000-4000-8000-000000000001",
+  "note": "Same netherite boots signature scanned many times must not stack risk.",
+  "repeat": 50,
+  "findingType": "CONFLICTING_ENCHANTMENTS",
+  "material": "NETHERITE_BOOTS",
+  "signature": "fake-boots-hash",
+  "expectUniqueFindings": 1,
+  "expectAlertsAtMost": 1
+}

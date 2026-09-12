@@ -1,0 +1,13 @@
+{
+  "id": "low-value-dirt-burst",
+  "kind": "FIELD-DERIVED REGRESSION",
+  "player": "player-1",
+  "uuid": "00000000-0000-4000-8000-000000000001",
+  "note": "422 DIRT in 10s is not a high-value burst.",
+  "material": "DIRT",
+  "amount": 422,
+  "source": "CONTAINER",
+  "confidence": "VERIFIED",
+  "expectHighValueBurst": false,
+  "expectScoreBelow": 60
+}

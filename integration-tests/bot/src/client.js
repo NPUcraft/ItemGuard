@@ -63,7 +63,7 @@ async function openBlock(bot, x, y, z) {
     const block = bot.blockAt(target);
     return block && !String(block.name).includes('air') ? block : null;
   }, { timeout: 8000, interval: 100, message: `No block at ${x},${y},${z} (chunks not loaded?)` });
-  if (!/chest|shulker|barrel|ender/i.test(loaded.name)) {
+  if (!/chest|shulker|barrel|ender|furnace|blast|smoker|stonecutter/i.test(loaded.name)) {
     throw new Error(`Expected container at ${x},${y},${z}, Mineflayer saw ${loaded.name}`);
   }
   await bot.lookAt(loaded.position.offset(0.5, 0.5, 0.5), true);
@@ -71,6 +71,13 @@ async function openBlock(bot, x, y, z) {
   let lastError = null;
   for (let attempt = 0; attempt < 3; attempt++) {
     const block = bot.blockAt(target) || loaded;
+    try {
+      if (typeof bot.openContainer === 'function') {
+        return await bot.openContainer(block);
+      }
+    } catch (error) {
+      lastError = error;
+    }
     try {
       const opened = waitForEventOnce(bot, 'windowOpen', 4000);
       bot.activateBlock(block);
@@ -141,7 +148,26 @@ async function swapInventorySlots(bot, from, to) {
   await bot.clickWindow(to, 0, 0);
 }
 
-async function craftDiamonds(bot, tableX, tableY, tableZ) {
+async function numberKeySwap(bot, slot, hotbarIndex) {
+  await bot.clickWindow(slot, hotbarIndex, 2);
+}
+
+async function doubleClickSlot(bot, slot) {
+  await bot.clickWindow(slot, 0, 6);
+}
+
+async function dragFromCursorToSlots(bot, slots) {
+  if (!Array.isArray(slots) || slots.length === 0) {
+    throw new Error('dragFromCursorToSlots requires destination slots');
+  }
+  await bot.clickWindow(-999, 0, 5);
+  for (const slot of slots) {
+    await bot.clickWindow(slot, 1, 5);
+  }
+  await bot.clickWindow(-999, 2, 5);
+}
+
+async function craftDiamonds(bot, tableX, tableY, tableZ, count = 1) {
   const table = bot.blockAt(new Vec3(tableX, tableY, tableZ));
   if (!table) {
     throw new Error('Crafting table not loaded');
@@ -151,7 +177,27 @@ async function craftDiamonds(bot, tableX, tableY, tableZ) {
   if (!recipes.length) {
     throw new Error('Mineflayer found no diamond uncraft recipe');
   }
-  await bot.craft(recipes[0], 1, table);
+  await bot.craft(recipes[0], count, table);
+}
+
+async function openVillagerByUuid(bot, uuid) {
+  const entity = Object.values(bot.entities).find((candidate) => (
+    candidate && String(candidate.uuid || '').replace(/-/g, '') === String(uuid || '').replace(/-/g, '')
+  ));
+  if (!entity) {
+    throw new Error('Mineflayer could not see the merchant villager');
+  }
+  if (typeof bot.openVillager !== 'function') {
+    throw new Error('Mineflayer openVillager is unavailable');
+  }
+  return bot.openVillager(entity);
+}
+
+async function tradeFirstOffer(villagerWindow, count = 1) {
+  if (!villagerWindow || typeof villagerWindow.trade !== 'function') {
+    throw new Error('Mineflayer villager.trade is unavailable');
+  }
+  await villagerWindow.trade(0, count);
 }
 
 async function creativeGiveDiamond(bot) {
@@ -199,5 +245,10 @@ module.exports = {
   firstEmptyInventorySlot,
   swapInventorySlots,
   craftDiamonds,
-  creativeGiveDiamond
+  creativeGiveDiamond,
+  numberKeySwap,
+  doubleClickSlot,
+  dragFromCursorToSlots,
+  openVillagerByUuid,
+  tradeFirstOffer
 };

@@ -11,6 +11,10 @@ ItemGuard detects abnormal item flows, invalid or suspicious items, and duplicat
 > ItemGuard detects abnormal item flows, invalid or suspicious items, and duplication indicators.  
 > It does not guarantee prevention or detection of every duplication exploit.
 
+**Published RC2:** `1.0.0-RC2` (GitHub prerelease [`v1.0.0-RC2`](https://github.com/NPUcraft/ItemGuard/releases/tag/v1.0.0-RC2)). That artifact does **not** include false-positive hardening.
+
+**Field Test prerelease:** `1.0.0-RC3-SNAPSHOT` (GitHub prerelease [`v1.0.0-RC3-SNAPSHOT`](https://github.com/NPUcraft/ItemGuard/releases/tag/v1.0.0-RC3-SNAPSHOT)). This is **not** `1.0.0-RC3` and not a final 1.0.0.
+
 ## What ItemGuard does
 
 - Scans inventories for illegal or suspicious item data that Paper actually exposes
@@ -46,12 +50,12 @@ ItemGuard detects abnormal item flows, invalid or suspicious items, and duplicat
 ## Installation
 
 1. Install Java 21 and Paper 1.21.8.
-2. Copy `ItemGuard-1.0.0-RC2.jar` into the Paper `plugins/` folder.
+2. Copy the JAR into the Paper `plugins/` folder. For the false-positive hardening Field Test, use `ItemGuard-1.0.0-RC3-SNAPSHOT.jar`. GitHub `ItemGuard-1.0.0-RC2.jar` is still the published RC2 **without** that hardening.
 3. Start the server once. ItemGuard copies default YAML files into `plugins/ItemGuard/` if they are missing.
 4. Edit those files if needed, then run `/ig reload`.
 5. Give operators `itemguard.admin` (default: OP).
 
-This is a **Release Candidate**. Use a test server first. Watch false positives around custom items and economy/reward plugins.
+GitHub `1.0.0-RC2` is the published release candidate. This workspace currently builds **1.0.0-RC3-SNAPSHOT** (Field Test candidate, not an RC3 release). Use a test server first. Watch false positives around custom items and economy/reward plugins.
 
 ## Upgrading from RC1
 
@@ -88,7 +92,7 @@ Alias: `/ig`
 | Command | Description |
 | --- | --- |
 | `/ig help` | Commands the sender may use |
-| `/ig status` | Plugin, Paper, scanner, flow, risk, HuskSync, and forensic-log status |
+| `/ig status` | Plugin, Paper, scanner, flow, risk, HuskSync, forensic-log status, plus Active Incidents / High / Critical |
 | `/ig inspect <player>` | Live risk / flow / HuskSync summary |
 | `/ig trace <player> [duration] [material]` | In-memory timeline (default `5m`) |
 | `/ig scan <player>` | Scan the current inventory |
@@ -136,16 +140,19 @@ There is no GUI profile switcher. Copy the idea into YAML:
 
 **Semi-Vanilla** — keep scanner INVALID rules; if shops/crates grant items, those plugins should call `ItemGuardApi.recordExpectedGain` or unexplained gains will appear.
 
-**RPG / custom-item server** — lower or zero `CUSTOM_ITEM_METADATA`, `COMPONENT_MODIFIED`, and `CUSTOM_MAX_STACK` in `risk.yml`, and/or add your item-plugin namespaces under `scanner.yml` `persistent-data.ignored-namespaces`. Do not disable `OVERSIZED_STACK` / `OVER_LEVEL_ENCHANTMENT` unless you truly allow those.
+**RPG / custom-item server** — `CUSTOM_ITEM_METADATA`, `COMPONENT_MODIFIED`, and `CUSTOM_MAX_STACK` already default to 0. Still add item-plugin namespaces under `scanner.yml` `persistent-data.ignored-namespaces`. Do not disable `OVERSIZED_STACK` / `OVER_LEVEL_ENCHANTMENT` unless you truly allow those.
 
 ## How Risk Scoring Works
 
-Each detector emits explainable signals. Active, unexpired signals are **summed** and clamped to 0–100.
+Each detector emits explainable signals, which enter **independent incidents**. Player current risk is **MAX(active incident scores)**, not the sum of every unexpired signal from the last 120 seconds.
 
-- Default staff alert: **60** (HIGH)
-- Critical: **80**
+Related item-flow evidence (unexplained diamonds + high-value burst + repeated identical signature) can combine inside one `ITEM_GAIN` incident. Unrelated events (suspicious boots, verified shulker sorting, stone pickup) do not stack.
+
+- Default staff alert: **one HIGH** when an incident crosses 60
+- Critical: **one CRITICAL** when it crosses 80
+- A CRITICAL incident does not spam staff chat on every later flow
 - Default bias: **alert first, never punish automatically**
-- Operators can raise thresholds if their server is noisier
+- UNKNOWN is an attribution state, not a cheat conclusion. Low-value unexplained gains stay in forensic logs with default risk 0–5
 
 Defaults (not a complete list):
 
@@ -153,17 +160,18 @@ Defaults (not a complete list):
 | --- | --- |
 | `OVERSIZED_STACK` | 45 |
 | `OVER_LEVEL_ENCHANTMENT` | 40 |
-| `UNEXPLAINED_ITEM_GAIN` | 35 |
-| `HIGH_VALUE_ITEM_BURST` / `RARE_ITEM_BURST` | 20 |
-| `CUSTOM_ITEM_METADATA` | 2 |
-| `COMPONENT_MODIFIED` | 4 |
+| `UNEXPLAINED_ITEM_GAIN` | value/amount driven (about 3–35), no longer a flat +35 |
+| `HIGH_VALUE_ITEM_BURST` / `RARE_ITEM_BURST` | 20, and `item-value >= 20` |
+| `CUSTOM_ITEM_METADATA` | 0 |
+| `COMPONENT_MODIFIED` | 0 |
+| `SHULKER_RAPID_TRANSFER` | 0 (speed alone is not an alert) |
 | `HUSKSYNC_DATA_APPLY` | 0 |
 | Creative inventory (`CREATIVE_INVENTORY`) | 0 |
 | Known container source | 0 |
 
-Custom name/lore/PDC/component/max-stack facts share a **family cap of 10** per correlation so a legal custom item cannot stack those signals to the alert threshold by itself.
+The scanner contributes risk once per `player + ItemSignature + FindingType`. Repeat scans only refresh lastSeen/slot.
 
-Signals live for `signal-ttl-millis` (default 120s). This is a rolling window, not a separate “one incident” cluster: unrelated events in that window can add together (for example unexplained 35 + high-value burst 20 = 55, still below 60). Same type + material + correlation is deduplicated.
+GUI source hints default to a **250ms** TTL. Exact pickup credits still last 2500ms.
 
 `items.yml` values are **risk weights for burst detection**, not an economy price list.
 
@@ -220,6 +228,9 @@ Unknown PDC namespaces are `CUSTOM`. Explicitly denied namespaces are `SUSPICIOU
 If another plugin puts items directly into a player inventory, register that gain **before** the items appear:
 
 ```java
+import com.npucraft.itemguard.api.ItemGuardApi;
+import com.npucraft.itemguard.api.ItemGuardApiProvider;
+
 if (ItemGuardApiProvider.isAvailable()) {
     ItemGuardApi api = ItemGuardApiProvider.get();
     api.recordExpectedGain(player.getUniqueId(), "DIAMOND", 16, "MyCratePlugin", rewardId);
@@ -242,7 +253,7 @@ Defaults are not “scan every player every tick”:
 
 ## Testing
 
-ItemGuard RC2 has automated tests covering:
+ItemGuard's current development build (`1.0.0-RC3-SNAPSHOT`) has automated tests covering:
 
 - Unit tests (pure Java)
 - Real Paper **1.21.8** + Mineflayer protocol **772**
@@ -279,7 +290,7 @@ The Test Harness HTTP server binds `127.0.0.1` only and is **not** part of the p
 3. Paper API data that is not visible or not reliable is not pretended to be scanned.
 4. HuskSync is formally tested only as **3.8.7 + Paper 1.21.8**.
 5. HS-006 / HS-007 / HS-008 are **not** covered by the automated HuskSync suite.
-6. Risk signals in the 120s TTL window are additive; two unrelated legal-but-noisy events can still approach the alert threshold.
+6. Player current risk is **MAX(active incident scores)**, not a global SUM of every signal in the 120s TTL window. Unrelated legal events no longer stack into a cheat score; related signals still combine inside one `ITEM_GAIN` incident.
 7. No SQLite, web dashboard, log search command, auto-ban, rollback, or ItemGuard-owned Redis. Important events are written asynchronously to local JSONL files under `plugins/ItemGuard/logs/`.
 
 ## Building
@@ -288,11 +299,13 @@ The Test Harness HTTP server binds `127.0.0.1` only and is **not** part of the p
 gradlew.bat clean build
 ```
 
-The product JAR is:
+The product JAR from this workspace (Field Test Build) is:
 
 ```text
-build/libs/ItemGuard-1.0.0-RC2.jar
+build/libs/ItemGuard-1.0.0-RC3-SNAPSHOT.jar
 ```
+
+Published GitHub prereleases include `ItemGuard-1.0.0-RC2.jar` (no hardening) and the Field Test `ItemGuard-1.0.0-RC3-SNAPSHOT.jar`. Do not treat the SNAPSHOT as an RC3 release, and do not reuse the `v1.0.0-RC2` tag.
 
 GitHub Actions builds the plugin JAR on `main` and publishes a GitHub Release when a `v*` tag is pushed. Downloads: https://github.com/NPUcraft/ItemGuard/releases
 
