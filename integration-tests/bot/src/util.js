@@ -244,8 +244,8 @@ function assertForensicRecordSafe(record) {
     }
   };
   walk(record, null);
-  if (record.schemaVersion !== 1 && record.schemaVersion !== 2) {
-    throw new Error('Forensic JSONL schemaVersion is not 1 or 2: ' + JSON.stringify(record));
+  if (record.schemaVersion !== 1 && record.schemaVersion !== 2 && record.schemaVersion !== 3) {
+    throw new Error('Forensic JSONL schemaVersion is not 1, 2 or 3: ' + JSON.stringify(record));
   }
 }
 

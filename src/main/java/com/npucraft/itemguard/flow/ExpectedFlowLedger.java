@@ -160,6 +160,49 @@ public final class ExpectedFlowLedger {
         return nearest;
     }
 
+    /**
+     * Snapshot of still-live credits. Call this before {@link #consume} so UNKNOWN diagnosis is not sampled
+     * after hints have already been removed.
+     */
+    public Probe probe(UUID playerId, Instant now) {
+        List<ExpectedFlowCredit> live = snapshot(playerId, now);
+        return new Probe(live, nearestHint(playerId, now), hintCount(playerId, now), exactCount(playerId, now));
+    }
+
+    public record Probe(
+            List<ExpectedFlowCredit> live,
+            ExpectedFlowCredit nearestHint,
+            int hintCount,
+            int exactCount
+    ) {
+        public Probe {
+            live = live == null ? List.of() : List.copyOf(live);
+        }
+
+        public ExpectedFlowCredit nearestMatching(String material) {
+            ExpectedFlowCredit best = null;
+            for (ExpectedFlowCredit credit : live) {
+                if (!credit.oneShot() || !credit.matches(material)) {
+                    continue;
+                }
+                if (best == null || credit.createdAt().isAfter(best.createdAt())) {
+                    best = credit;
+                }
+            }
+            return best;
+        }
+
+        public int matchingHintCount(String material) {
+            int count = 0;
+            for (ExpectedFlowCredit credit : live) {
+                if (credit.oneShot() && credit.matches(material)) {
+                    count++;
+                }
+            }
+            return count;
+        }
+    }
+
     public void discardOneShot(UUID playerId) {
         List<ExpectedFlowCredit> credits = creditsByPlayer.get(playerId);
         if (credits == null) {

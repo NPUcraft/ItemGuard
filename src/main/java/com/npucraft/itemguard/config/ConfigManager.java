@@ -1,6 +1,7 @@
 package com.npucraft.itemguard.config;
 
 import com.npucraft.itemguard.command.DurationParser;
+import com.npucraft.itemguard.item.ItemValueDefaults;
 import com.npucraft.itemguard.item.ItemValueRegistry;
 import com.npucraft.itemguard.risk.model.SignalType;
 import org.bukkit.configuration.ConfigurationSection;
@@ -415,7 +416,7 @@ public final class ConfigManager {
                 values.put(key, validator.clampInt("values." + key, section.getInt(key), 0, 100, defaultValue));
             }
         }
-        return new ItemValueRegistry(defaultValue, values);
+        return new ItemValueRegistry(defaultValue, ItemValueDefaults.mergeOperatorValues(values));
     }
 
     private static Set<String> set(YamlConfiguration yaml, String path, Set<String> fallback) {

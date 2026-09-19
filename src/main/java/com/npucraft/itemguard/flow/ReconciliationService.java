@@ -16,6 +16,8 @@ import com.npucraft.itemguard.risk.detector.RiskDetector;
 import com.npucraft.itemguard.risk.model.RiskAssessment;
 import com.npucraft.itemguard.risk.model.RiskSignal;
 import com.npucraft.itemguard.scan.IllegalItemScanner;
+import com.npucraft.itemguard.scan.ScanObserveResult;
+import com.npucraft.itemguard.scan.ScannerFindingLog;
 import com.npucraft.itemguard.session.PlayerGuardSession;
 import com.npucraft.itemguard.session.SessionManager;
 import com.npucraft.itemguard.trace.TraceService;
@@ -147,6 +149,8 @@ public final class ReconciliationService {
 
             List<ItemFlowEvent> flows = new ArrayList<>();
             AttributionDecision attribution = null;
+            List<AttributionDecision> attributions = new ArrayList<>();
+            List<ScannerFindingLog> scannerLogs = List.of();
             if ("husksync-complete".equals(reason)) {
                 expectedFlows.ledger().clear(player.getUniqueId());
                 session.setAttributionGraceUsed(false);
@@ -170,6 +174,7 @@ public final class ReconciliationService {
                     return ReconciliationResult.skipped(session.playerId(), "attribution-grace");
                 }
                 AttributionQuery query = new AttributionQuery(session.lastContainer(), null, null);
+                ExpectedFlowLedger.Probe probe = expectedFlows.ledger().probe(player.getUniqueId(), now);
                 UnknownGainCorrelator.CorrelationResult correlation = correlator.correlate(
                         player.getUniqueId(),
                         gains,
@@ -208,8 +213,7 @@ public final class ReconciliationService {
                     return ReconciliationResult.skipped(session.playerId(), "attribution-grace");
                 }
                 boolean creative = player.getGameMode() == GameMode.CREATIVE && settings.ignoreCreativeInventoryGains();
-                ExpectedFlowLedger ledger = expectedFlows.ledger();
-                ExpectedFlowCredit nearest = ledger.nearestHint(player.getUniqueId(), now);
+                int consumedCount = correlation.explained().size();
                 for (UnknownGainCorrelator.UnexplainedGain leftover : leftovers) {
                     if (creative) {
                         flows.add(ItemFlowFactory.create(
@@ -229,6 +233,8 @@ public final class ReconciliationService {
                         continue;
                     }
                     session.addUnknownGain(leftover.amount());
+                    ExpectedFlowCredit matching = probe.nearestMatching(leftover.material());
+                    ExpectedFlowCredit nearest = matching != null ? matching : probe.nearestHint();
                     long hintAge = nearest == null ? -1L : Math.max(0L, Duration.between(nearest.createdAt(), now).toMillis());
                     attribution = new AttributionDecision(
                             now,
@@ -237,12 +243,15 @@ public final class ReconciliationService {
                             leftover.amount(),
                             nearest == null ? null : nearest.source().name(),
                             nearest == null ? null : (nearest.oneShot() ? "SOURCE_HINT" : "EXACT"),
-                            ledger.hintCount(player.getUniqueId(), now),
-                            ledger.exactCount(player.getUniqueId(), now),
+                            probe.hintCount(),
+                            probe.exactCount(),
                             nearest == null ? null : nearest.source().name(),
                             hintAge,
-                            leftover.amount()
+                            leftover.amount(),
+                            probe.matchingHintCount(leftover.material()),
+                            consumedCount
                     );
+                    attributions.add(attribution);
                     logAttribution(player, attribution);
                     flows.add(ItemFlowFactory.create(
                             player,
@@ -261,7 +270,7 @@ public final class ReconciliationService {
                 }
                 if (leftovers.isEmpty()) {
                     session.setAttributionGraceUsed(false);
-                    ExpectedFlowCredit nearestKept = ledger.nearestHint(player.getUniqueId(), now);
+                    ExpectedFlowCredit nearestKept = expectedFlows.ledger().nearestHint(player.getUniqueId(), now);
                     attribution = new AttributionDecision(
                             now,
                             "explained",
@@ -269,11 +278,13 @@ public final class ReconciliationService {
                             gains.values().stream().mapToInt(Integer::intValue).sum(),
                             correlation.explained().isEmpty() ? null : correlation.explained().getFirst().credit().source().name(),
                             correlation.explained().isEmpty() ? null : (correlation.explained().getFirst().credit().oneShot() ? "SOURCE_HINT" : "EXACT"),
-                            ledger.hintCount(player.getUniqueId(), now),
-                            ledger.exactCount(player.getUniqueId(), now),
+                            expectedFlows.ledger().hintCount(player.getUniqueId(), now),
+                            expectedFlows.ledger().exactCount(player.getUniqueId(), now),
                             nearestKept == null ? null : nearestKept.source().name(),
                             nearestKept == null ? -1L : Math.max(0L, Duration.between(nearestKept.createdAt(), now).toMillis()),
-                            0
+                            0,
+                            0,
+                            consumedCount
                     );
                 }
             }
@@ -299,7 +310,9 @@ public final class ReconciliationService {
             }
             if (scanner != null && shouldScan(reason, flows, produced, session, now)) {
                 long scanStart = System.nanoTime();
-                produced.addAll(scanner.scanPlayer(player, correlationId, settings.maxScanDepth(), riskEngine.incidents()));
+                ScanObserveResult scanned = scanner.observePlayer(player, correlationId, settings.maxScanDepth(), riskEngine.incidents());
+                produced.addAll(scanned.signals());
+                scannerLogs = scanned.logs();
                 performance.recordScan(System.nanoTime() - scanStart);
                 session.setLastScanTime(now);
             }
@@ -320,7 +333,9 @@ public final class ReconciliationService {
                     assessment,
                     delta,
                     assessment.escalations(),
-                    attribution
+                    attribution,
+                    attributions,
+                    scannerLogs
             );
             if (resultConsumer != null) {
                 resultConsumer.accept(result);
@@ -439,21 +454,36 @@ public final class ReconciliationService {
             RiskAssessment assessment,
             Map<String, Integer> delta,
             List<com.npucraft.itemguard.risk.incident.IncidentEscalation> escalations,
-            AttributionDecision attribution
+            AttributionDecision attribution,
+            List<AttributionDecision> attributions,
+            List<ScannerFindingLog> scannerLogs
     ) {
         public ReconciliationResult {
             flows = flows == null ? List.of() : List.copyOf(flows);
             signals = signals == null ? List.of() : List.copyOf(signals);
             delta = delta == null ? Map.of() : Map.copyOf(delta);
             escalations = escalations == null ? List.of() : List.copyOf(escalations);
+            attributions = attributions == null ? List.of() : List.copyOf(attributions);
+            scannerLogs = scannerLogs == null ? List.of() : List.copyOf(scannerLogs);
+        }
+
+        public AttributionDecision attributionFor(String material) {
+            if (material != null) {
+                for (AttributionDecision decision : attributions) {
+                    if (material.equals(decision.material())) {
+                        return decision;
+                    }
+                }
+            }
+            return attribution;
         }
 
         public static ReconciliationResult skipped(UUID playerId, String reason) {
-            return new ReconciliationResult(playerId, reason, List.of(), List.of(), null, Map.of(), List.of(), null);
+            return new ReconciliationResult(playerId, reason, List.of(), List.of(), null, Map.of(), List.of(), null, List.of(), List.of());
         }
 
         public static ReconciliationResult baseline(UUID playerId) {
-            return new ReconciliationResult(playerId, "baseline", List.of(), List.of(), null, Map.of(), List.of(), null);
+            return new ReconciliationResult(playerId, "baseline", List.of(), List.of(), null, Map.of(), List.of(), null, List.of(), List.of());
         }
     }
 }

@@ -1,16 +1,15 @@
 package com.npucraft.itemguard.scan;
 
 import com.npucraft.itemguard.item.ItemSignature;
-import com.npucraft.itemguard.risk.incident.IncidentType;
 import com.npucraft.itemguard.risk.incident.PlayerIncidentTracker;
 import com.npucraft.itemguard.risk.model.SignalType;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -25,16 +24,19 @@ public final class ScannerFindingTracker {
 
     private final Map<UUID, Map<String, FindingState>> findings = new ConcurrentHashMap<>();
 
-    public record ObserveResult(boolean newRiskEvidence, FindingState state) {
+    public record ObserveResult(boolean newRiskEvidence, FindingLifecycle lifecycle, FindingState state) {
+        public ObserveResult(boolean newRiskEvidence, FindingState state) {
+            this(newRiskEvidence, newRiskEvidence ? FindingLifecycle.NEW : FindingLifecycle.REFRESH, state);
+        }
     }
 
     public ObserveResult observe(UUID playerId, ScanFinding finding, int slot, Instant now) {
         if (playerId == null || finding == null) {
-            return new ObserveResult(false, null);
+            return new ObserveResult(false, FindingLifecycle.REFRESH, null);
         }
         if (finding.classification() == ScanClassification.INFO
                 || finding.classification() == ScanClassification.CUSTOM) {
-            return new ObserveResult(false, null);
+            return new ObserveResult(false, FindingLifecycle.REFRESH, null);
         }
         String key = key(finding.signature(), finding.material(), finding.signalType());
         Map<String, FindingState> byKey = findings.computeIfAbsent(playerId, unused -> new ConcurrentHashMap<>());
@@ -43,13 +45,21 @@ public final class ScannerFindingTracker {
             existing.lastSeen = now;
             existing.slot = slot;
             existing.seenThisScan = true;
-            return new ObserveResult(false, existing);
+            return new ObserveResult(false, FindingLifecycle.REFRESH, existing);
         }
         cap(byKey);
-        FindingState created = new FindingState(key, finding.signalType(), now, slot, incidentType(finding));
+        FindingState created = new FindingState(
+                key,
+                finding.signalType(),
+                now,
+                slot,
+                finding.material(),
+                finding.ruleId(),
+                ScannerFindingLog.boundedReason(finding.description())
+        );
         created.seenThisScan = true;
         byKey.put(key, created);
-        return new ObserveResult(true, created);
+        return new ObserveResult(true, FindingLifecycle.NEW, created);
     }
 
     public void beginScan(UUID playerId) {
@@ -62,19 +72,19 @@ public final class ScannerFindingTracker {
         }
     }
 
-    public Set<String> finishScan(UUID playerId, Instant now, PlayerIncidentTracker incidents) {
+    public List<FindingState> finishScan(UUID playerId, Instant now, PlayerIncidentTracker incidents) {
         Map<String, FindingState> byKey = findings.get(playerId);
         if (byKey == null) {
-            return Set.of();
+            return List.of();
         }
-        Set<String> resolved = new HashSet<>();
+        List<FindingState> resolved = new ArrayList<>();
         Iterator<Map.Entry<String, FindingState>> iterator = byKey.entrySet().iterator();
         while (iterator.hasNext()) {
             FindingState state = iterator.next().getValue();
             if (state.active && !state.seenThisScan) {
                 state.active = false;
                 state.resolvedAt = now;
-                resolved.add(state.key);
+                resolved.add(state);
                 if (incidents != null) {
                     incidents.resolveByFindingKey(playerId, state.key, now);
                 }
@@ -86,7 +96,7 @@ public final class ScannerFindingTracker {
         if (byKey.isEmpty()) {
             findings.remove(playerId);
         }
-        return resolved;
+        return List.copyOf(resolved);
     }
 
     public void clear(UUID playerId) {
@@ -109,12 +119,6 @@ public final class ScannerFindingTracker {
 
     public static String key(ItemSignature signature, String material, SignalType type) {
         return PlayerIncidentTracker.findingDiscriminator(signature, material, type);
-    }
-
-    private static IncidentType incidentType(ScanFinding finding) {
-        return finding.classification() == ScanClassification.INVALID
-                ? IncidentType.ILLEGAL_ITEM
-                : IncidentType.SUSPICIOUS_ITEM;
     }
 
     private static void cap(Map<String, FindingState> byKey) {
@@ -141,13 +145,27 @@ public final class ScannerFindingTracker {
         private int slot;
         private boolean active = true;
         private boolean seenThisScan;
+        private final String material;
+        private final String ruleId;
+        private final String triggerReason;
 
-        private FindingState(String key, SignalType type, Instant now, int slot, IncidentType unused) {
+        private FindingState(
+                String key,
+                SignalType type,
+                Instant now,
+                int slot,
+                String material,
+                String ruleId,
+                String triggerReason
+        ) {
             this.key = key;
             this.type = type;
             this.firstSeen = now;
             this.lastSeen = now;
             this.slot = slot;
+            this.material = material == null ? "*" : material;
+            this.ruleId = ruleId == null ? "" : ruleId;
+            this.triggerReason = triggerReason == null ? "" : triggerReason;
         }
 
         public String key() {
@@ -172,6 +190,18 @@ public final class ScannerFindingTracker {
 
         public boolean active() {
             return active;
+        }
+
+        public String material() {
+            return material;
+        }
+
+        public String ruleId() {
+            return ruleId;
+        }
+
+        public String triggerReason() {
+            return triggerReason;
         }
     }
 }

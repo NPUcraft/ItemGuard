@@ -6,6 +6,7 @@ import com.npucraft.itemguard.flow.model.FlowSource;
 import com.npucraft.itemguard.flow.model.ItemFlowEvent;
 import com.npucraft.itemguard.flow.model.SourceConfidence;
 import com.npucraft.itemguard.item.ItemSignature;
+import com.npucraft.itemguard.item.ItemValueDefaults;
 import com.npucraft.itemguard.item.ItemValueRegistry;
 import com.npucraft.itemguard.risk.detector.BurstDetector;
 import com.npucraft.itemguard.risk.detector.UnexplainedGainDetector;
@@ -62,13 +63,18 @@ class ThreatRegressionSuiteTest {
         } else {
             missed++;
         }
+        if (weightedChestplateUnknownStillDetectable()) {
+            detected++;
+        } else {
+            missed++;
+        }
         if (criticalDupeLikeSample(values, settings)) {
             detected++;
         } else {
             missed++;
         }
         assertEquals(0, missed, "threat samples missed=" + missed + " detected=" + detected);
-        assertEquals(5, detected);
+        assertEquals(6, detected);
     }
 
     private static boolean overLevelDetected() {
@@ -101,6 +107,15 @@ class ThreatRegressionSuiteTest {
         int diamond = replay(values, settings).unknown("DIAMOND", 64).score();
         int netherite = replay(values, settings).unknown("NETHERITE_BLOCK", 64).score();
         return netherite > diamond;
+    }
+
+    private static boolean weightedChestplateUnknownStillDetectable() {
+        ItemValueRegistry values = new ItemValueRegistry(1, ItemValueDefaults.mergeOperatorValues(Map.of(
+                "DIAMOND", 25,
+                "NETHERITE_BLOCK", 80
+        )));
+        RiskAssessment assessment = replay(values, RiskSettings.defaults()).unknown("NETHERITE_CHESTPLATE", 1);
+        return assessment.score() >= 10 && assessment.score() < 60;
     }
 
     private static boolean criticalDupeLikeSample(ItemValueRegistry values, RiskSettings settings) {

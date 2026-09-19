@@ -44,7 +44,10 @@ public record ForensicLogRecord(
         String incidentAlertTransition,
         int schemaVersion
 ) {
-    public static final int SCHEMA_VERSION = 2;
+    /**
+     * Schema 3: {@code incidentId} belongs to this event. Player-highest incident is metadata only.
+     */
+    public static final int SCHEMA_VERSION = 3;
 
     public ForensicLogRecord {
         Objects.requireNonNull(recordId, "recordId");

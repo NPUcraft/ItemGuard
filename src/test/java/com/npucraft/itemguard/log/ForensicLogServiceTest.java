@@ -35,7 +35,7 @@ class ForensicLogServiceTest {
         String line = Files.readString(file, StandardCharsets.UTF_8).trim();
         assertTrue(line.startsWith("{"));
         assertTrue(line.contains("\"type\":\"UNKNOWN_GAIN\""));
-        assertTrue(line.contains("\"schemaVersion\":2"));
+        assertTrue(line.contains("\"schemaVersion\":3"));
         assertTrue(line.contains("\"metadata\":{") || !line.contains("\"metadata\""));
         assertFalse(line.contains("\"metadata\"{"));
         assertFalse(line.contains("\n{"));

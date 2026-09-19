@@ -6,6 +6,7 @@ import com.npucraft.itemguard.flow.model.FlowSource;
 import com.npucraft.itemguard.flow.model.ItemFlowEvent;
 import com.npucraft.itemguard.flow.model.SourceConfidence;
 import com.npucraft.itemguard.item.ItemSignature;
+import com.npucraft.itemguard.item.ItemValueDefaults;
 import com.npucraft.itemguard.item.ItemValueRegistry;
 import com.npucraft.itemguard.risk.detector.BurstDetector;
 import com.npucraft.itemguard.risk.detector.ShulkerFlowDetector;
@@ -111,6 +112,21 @@ class FalsePositiveRegressionSuiteTest {
         ));
         assertTrue(unknown.score() < 60, "verified diamond history must not promote a later +32 UNKNOWN to High");
         assertTrue(unknown.escalations().isEmpty());
+    }
+
+    @Test
+    void verifiedNetheriteChestplateDoesNotAlertAfterEquipmentWeights() {
+        ItemValueRegistry weighted = new ItemValueRegistry(1, ItemValueDefaults.mergeOperatorValues(Map.of(
+                "DIAMOND", 25,
+                "NETHERITE_BLOCK", 80
+        )));
+        Replay replay = new Replay(weighted, RiskSettings.defaults());
+        RiskAssessment assessment = replay.play(List.of(
+                replay.flow("NETHERITE_CHESTPLATE", 1, FlowSource.CONTAINER, SourceConfidence.VERIFIED)
+        ));
+        assertTrue(assessment.score() < 60, "normal chestplate withdraw must stay below High");
+        assertTrue(assessment.escalations().isEmpty());
+        assertEquals(55, weighted.valueOf("NETHERITE_CHESTPLATE"));
     }
 
     @Test

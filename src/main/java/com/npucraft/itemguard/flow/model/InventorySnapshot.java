@@ -30,6 +30,27 @@ public record InventorySnapshot(
         return new InventorySnapshot(timestamp, Map.of(), Map.of(), Map.of(), List.of());
     }
 
+    /**
+     * Builds totals from player-owned slots only. Callers must not pass external chest contents.
+     */
+    public static InventorySnapshot fromSlots(Instant timestamp, List<SlotSnapshot> slots) {
+        List<SlotSnapshot> copy = slots == null ? List.of() : List.copyOf(slots);
+        Map<String, Integer> materials = new java.util.HashMap<>();
+        Map<String, Integer> nested = new java.util.HashMap<>();
+        Map<ItemSignature, Integer> signatureTotals = new java.util.HashMap<>();
+        for (SlotSnapshot slot : copy) {
+            if (slot == null || slot.empty()) {
+                continue;
+            }
+            materials.merge(slot.material(), slot.amount(), Integer::sum);
+            slot.nestedMaterials().forEach((material, amount) -> nested.merge(material, amount, Integer::sum));
+            if (slot.signature() != null && slot.signature().isDetailed()) {
+                signatureTotals.merge(slot.signature(), slot.amount(), Integer::sum);
+            }
+        }
+        return new InventorySnapshot(timestamp, materials, nested, signatureTotals, copy);
+    }
+
     public int materialCount(String material) {
         return materialTotals.getOrDefault(material, 0);
     }

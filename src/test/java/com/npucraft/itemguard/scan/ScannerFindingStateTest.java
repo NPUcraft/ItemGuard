@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ScannerFindingStateTest {
@@ -62,6 +63,31 @@ class ScannerFindingStateTest {
         ScanFinding finding = conflicting(sig("boots-abc"));
         assertEquals(1, observer.observe(player, List.of(finding), UUID.randomUUID(), now, null).size());
         assertEquals(0, observer.observe(player, List.of(finding), UUID.randomUUID(), now.plusMillis(20), null).size());
+    }
+
+    @Test
+    void refreshAndResolvedAreLoggedWithoutRescoring() {
+        ScannerFindingObserver observer = observer();
+        UUID player = UUID.randomUUID();
+        Instant now = Instant.now();
+        ScanFinding finding = conflicting(sig("boots-abc"));
+        ScanObserveResult first = observer.observeDetailed(player, List.of(finding), UUID.randomUUID(), now, null);
+        assertEquals(1, first.signals().size());
+        assertEquals(1, first.logs().size());
+        assertEquals(FindingLifecycle.NEW, first.logs().getFirst().lifecycle());
+        assertTrue(first.logs().getFirst().riskApplied() > 0);
+        ScanObserveResult refresh = observer.observeDetailed(player, List.of(finding), UUID.randomUUID(), now.plusSeconds(1), null);
+        assertTrue(refresh.signals().isEmpty());
+        assertEquals(1, refresh.logs().size());
+        assertEquals(FindingLifecycle.REFRESH, refresh.logs().getFirst().lifecycle());
+        assertEquals(0, refresh.logs().getFirst().riskApplied());
+        assertEquals("enchantments", refresh.logs().getFirst().ruleId());
+        assertFalse(refresh.logs().getFirst().triggerReason().isBlank());
+        ScanObserveResult resolved = observer.observeDetailed(player, List.of(), UUID.randomUUID(), now.plusSeconds(2), null);
+        assertTrue(resolved.signals().isEmpty());
+        assertEquals(1, resolved.logs().size());
+        assertEquals(FindingLifecycle.RESOLVED, resolved.logs().getFirst().lifecycle());
+        assertEquals(0, resolved.logs().getFirst().riskApplied());
     }
 
     @Test

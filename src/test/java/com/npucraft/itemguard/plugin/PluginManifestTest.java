@@ -73,6 +73,10 @@ class PluginManifestTest {
         String items = readClasspath("/items.yml");
         for (String material : List.of(
                 "DIAMOND:",
+                "DIAMOND_CHESTPLATE:",
+                "NETHERITE_CHESTPLATE:",
+                "NETHERITE_UPGRADE_SMITHING_TEMPLATE:",
+                "DIAMOND_AXE:",
                 "DIAMOND_BLOCK:",
                 "NETHERITE_SCRAP:",
                 "NETHERITE_INGOT:",
@@ -109,6 +113,7 @@ class PluginManifestTest {
         assertTrue(logging.contains("format: JSONL"));
         assertTrue(logging.contains("retention-days: 30"));
         assertTrue(logging.contains("directory: logs"));
+        assertTrue(logging.contains("main, industrial, resource"));
         assertTrue(config.contains("heartbeat-interval-ticks: 40"));
         assertTrue(config.contains("scan-debounce-millis: 1500"));
         String messages = readClasspath("/messages.yml");

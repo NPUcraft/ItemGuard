@@ -12,7 +12,12 @@ import com.npucraft.itemguard.risk.RiskLevel;
 import com.npucraft.itemguard.risk.model.RiskSignal;
 import com.npucraft.itemguard.risk.model.Severity;
 import com.npucraft.itemguard.risk.model.SignalType;
+import com.npucraft.itemguard.risk.incident.IncidentType;
+import com.npucraft.itemguard.risk.incident.RiskIncidentSnapshot;
+import com.npucraft.itemguard.risk.model.RiskAssessment;
+import com.npucraft.itemguard.scan.FindingLifecycle;
 import com.npucraft.itemguard.scan.ScanClassification;
+import com.npucraft.itemguard.scan.ScannerFindingLog;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -135,13 +140,22 @@ public final class ForensicLogPublisher {
                 current.submit(highValueFlow(flow, result, logging));
             }
         }
-        for (RiskSignal signal : result.signals()) {
-            if (!isScannerSignal(signal.type())) {
-                continue;
+        if (result.scannerLogs() != null && !result.scannerLogs().isEmpty()) {
+            for (ScannerFindingLog log : result.scannerLogs()) {
+                ForensicLogRecord finding = scannerFinding(log, result, logging);
+                if (finding != null) {
+                    current.submit(finding);
+                }
             }
-            ForensicLogRecord finding = scannerFinding(signal, result, logging);
-            if (finding != null) {
-                current.submit(finding);
+        } else {
+            for (RiskSignal signal : result.signals()) {
+                if (!isScannerSignal(signal.type())) {
+                    continue;
+                }
+                ForensicLogRecord finding = scannerFinding(signal, result, logging);
+                if (finding != null) {
+                    current.submit(finding);
+                }
             }
         }
     }
@@ -177,20 +191,23 @@ public final class ForensicLogPublisher {
         String level = result.assessment() == null ? RiskLevel.SUSPICIOUS.name() : result.assessment().level().name();
         Map<String, String> metadata = new LinkedHashMap<>();
         metadata.put("riskContribution", Integer.toString(contribution));
-        if (result.attribution() != null) {
-            metadata.putAll(result.attribution().toMetadata());
+        var decision = result.attributionFor(flow.material());
+        if (decision != null) {
+            metadata.putAll(decision.toMetadata());
         }
+        putHighestIncident(metadata, result.assessment());
+        RiskIncidentSnapshot eventIncident = eventIncident(result.assessment(), flow.material(), IncidentType.ITEM_GAIN);
         ForensicLogRecord.Builder builder = baseFlow(ForensicLogType.UNKNOWN_GAIN, priority, flow, logging)
                 .risk(risk, level)
                 .source("UNKNOWN")
                 .sourceConfidence(flow.confidence().name())
                 .summary("Unexplained inventory gain")
                 .metadata(metadata);
-        if (result.assessment() != null) {
+        if (eventIncident != null) {
             builder.incident(
-                    result.assessment().highestIncidentId(),
-                    result.assessment().highestIncidentType(),
-                    result.assessment().score(),
+                    eventIncident.incidentId(),
+                    eventIncident.type().name(),
+                    eventIncident.score(),
                     null
             );
         }
@@ -248,6 +265,73 @@ public final class ForensicLogPublisher {
                         "totalOutgoingItems", Integer.toString(outgoing),
                         "topChanges", String.join(",", top)
                 ));
+        if (sample != null) {
+            builder.location(sample.worldId(), sample.worldName(), sample.x(), sample.y(), sample.z());
+        }
+        return builder.build();
+    }
+
+    private ForensicLogRecord scannerFinding(
+            ScannerFindingLog log,
+            ReconciliationService.ReconciliationResult result,
+            LoggingSettings logging
+    ) {
+        if (log == null || log.classification() == ScanClassification.INFO || log.classification() == ScanClassification.CUSTOM) {
+            if (log == null || log.lifecycle() != FindingLifecycle.RESOLVED) {
+                return null;
+            }
+        }
+        ScanClassification classification = log.classification();
+        if (classification == ScanClassification.INVALID && !logging.logInvalidItems()) {
+            return null;
+        }
+        if (classification == ScanClassification.SUSPICIOUS && !logging.logSuspiciousItems()) {
+            return null;
+        }
+        if (log.lifecycle() == FindingLifecycle.RESOLVED && !logging.logSuspiciousItems() && !logging.logInvalidItems()) {
+            return null;
+        }
+        ForensicLogType type = classification == ScanClassification.INVALID
+                ? ForensicLogType.INVALID_ITEM
+                : ForensicLogType.SUSPICIOUS_ITEM;
+        if (log.lifecycle() == FindingLifecycle.RESOLVED) {
+            type = ForensicLogType.SUSPICIOUS_ITEM;
+        }
+        ForensicLogPriority priority = classification == ScanClassification.INVALID
+                ? ForensicLogPriority.CRITICAL
+                : (log.lifecycle() == FindingLifecycle.REFRESH || log.lifecycle() == FindingLifecycle.RESOLVED
+                ? ForensicLogPriority.LOW
+                : ForensicLogPriority.HIGH);
+        ItemFlowEvent sample = result.flows().isEmpty() ? null : result.flows().get(0);
+        String playerName = sample == null ? null : sample.playerName();
+        Map<String, String> metadata = new LinkedHashMap<>();
+        metadata.put("findingId", log.findingId() == null ? "" : log.findingId());
+        metadata.put("lifecycle", log.lifecycle().name());
+        metadata.put("ruleId", log.ruleId() == null ? "" : log.ruleId());
+        metadata.put("triggerReason", ScannerFindingLog.boundedReason(log.triggerReason()));
+        metadata.put("riskApplied", Integer.toString(Math.max(0, log.riskApplied())));
+        putHighestIncident(metadata, result.assessment());
+        ForensicLogRecord.Builder builder = ForensicLogRecord.builder(type, priority)
+                .instant(log.timestamp())
+                .serverName(logging.serverName())
+                .player(log.playerId(), playerName)
+                .material(log.material())
+                .amount(log.amount())
+                .classification(classification.name())
+                .findingTypes(List.of(log.signalType().name()))
+                .signalTypes(List.of(log.signalType().name()))
+                .correlationId(log.correlationId())
+                .itemSignature(signatureHash(log.signature()))
+                .risk(log.riskApplied(), classification.name())
+                .summary(ScannerFindingLog.boundedReason(log.triggerReason()))
+                .metadata(metadata);
+        IncidentType preferred = classification == ScanClassification.INVALID
+                ? IncidentType.ILLEGAL_ITEM
+                : IncidentType.SUSPICIOUS_ITEM;
+        RiskIncidentSnapshot eventIncident = eventIncident(result.assessment(), log.material(), preferred);
+        if (eventIncident != null) {
+            builder.incident(eventIncident.incidentId(), eventIncident.type().name(), eventIncident.score(), null);
+        }
         if (sample != null) {
             builder.location(sample.worldId(), sample.worldName(), sample.x(), sample.y(), sample.z());
         }
@@ -380,5 +464,27 @@ public final class ForensicLogPublisher {
             copy.put(key, value == null ? "" : value);
         });
         return copy;
+    }
+
+    static RiskIncidentSnapshot eventIncident(RiskAssessment assessment, String material, IncidentType type) {
+        if (assessment == null || assessment.activeIncidents() == null || material == null || type == null) {
+            return null;
+        }
+        for (RiskIncidentSnapshot incident : assessment.activeIncidents()) {
+            if (incident.type() == type && material.equalsIgnoreCase(incident.material())) {
+                return incident;
+            }
+        }
+        return null;
+    }
+
+    static void putHighestIncident(Map<String, String> metadata, RiskAssessment assessment) {
+        if (metadata == null || assessment == null) {
+            return;
+        }
+        metadata.put("playerCurrentRisk", Integer.toString(assessment.score()));
+        metadata.put("playerHighestIncidentId", assessment.highestIncidentId() == null ? "" : assessment.highestIncidentId().toString());
+        metadata.put("playerHighestIncidentType", assessment.highestIncidentType() == null ? "" : assessment.highestIncidentType());
+        metadata.put("playerHighestIncidentRisk", Integer.toString(assessment.score()));
     }
 }

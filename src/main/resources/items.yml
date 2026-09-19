@@ -1,5 +1,6 @@
 # ItemGuard risk weights (0-100). This is not an economy price table.
-# Items missing from this file use default-value. Tune weights to your server; do not treat them as currency.
+# Items missing from this file use bundled equipment fallbacks when present, otherwise default-value.
+# Operator keys always win. Existing items.yml is never replaced on upgrade.
 
 default-value: 1
 
@@ -48,7 +49,22 @@ values:
   TRIDENT: 45
   ENCHANTED_BOOK: 25
   DIAMOND_SWORD: 22
+  DIAMOND_AXE: 20
+  DIAMOND_SHOVEL: 16
+  DIAMOND_HOE: 12
+  DIAMOND_HELMET: 20
+  DIAMOND_CHESTPLATE: 24
+  DIAMOND_LEGGINGS: 23
+  DIAMOND_BOOTS: 18
   NETHERITE_SWORD: 50
+  NETHERITE_AXE: 48
+  NETHERITE_SHOVEL: 42
+  NETHERITE_HOE: 30
+  NETHERITE_HELMET: 48
+  NETHERITE_CHESTPLATE: 55
+  NETHERITE_LEGGINGS: 52
+  NETHERITE_BOOTS: 45
+  NETHERITE_UPGRADE_SMITHING_TEMPLATE: 40
   DIAMOND_PICKAXE: 22
   NETHERITE_PICKAXE: 50
   GOLDEN_CARROT: 8

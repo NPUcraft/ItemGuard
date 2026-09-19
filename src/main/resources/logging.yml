@@ -9,6 +9,7 @@ logging:
   # Relative to plugins/ItemGuard/. Path traversal is rejected.
   directory: logs
   # Used when aggregating logs from several HuskSync backends.
+  # Existing operator files are not overwritten. Suggested names: main, industrial, resource.
   server-name: unknown
   retention-days: 30
   max-file-size-mb: 100

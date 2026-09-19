@@ -548,7 +548,7 @@ function assertNoAlerts(snapshot, label) {
 
 function assertHuskSyncForensicV2(record, label) {
   assert(record && record.type === 'HUSKSYNC_DATA_APPLY', `${label}: type is ${record && record.type}`, 'ITEMGUARD_BUG');
-  assertEq(Number(record.schemaVersion), 2, `${label} schemaVersion`, 'ITEMGUARD_BUG');
+  assertEq(Number(record.schemaVersion), 3, `${label} schemaVersion`, 'ITEMGUARD_BUG');
   assertEq(Number(record.riskScore), 0, `${label} riskScore`, 'ITEMGUARD_BUG');
   const incidentType = record.incidentType;
   assert(

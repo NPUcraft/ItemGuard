@@ -31,7 +31,7 @@ class JsonlSerializerTest {
         assertTrue(json.contains("\\\""));
         assertTrue(json.contains("\\n"));
         assertTrue(json.contains("\\\\"));
-        assertTrue(json.contains("\"schemaVersion\":2"));
+        assertTrue(json.contains("\"schemaVersion\":3"));
         assertTrue(json.contains("\"type\":\"UNKNOWN_GAIN\""));
         assertTrue(json.contains("\"metadata\":{"));
         assertFalse(json.contains("\"metadata\"{"));
@@ -75,14 +75,14 @@ class JsonlSerializerTest {
     }
 
     @Test
-    void huskSyncApplyOmitsIncidentAndKeepsSchema2() {
+    void huskSyncApplyOmitsIncidentAndKeepsSchema3() {
         ForensicLogRecord record = ForensicLogRecord.builder(ForensicLogType.HUSKSYNC_DATA_APPLY, ForensicLogPriority.NORMAL)
                 .risk(0, "NORMAL")
                 .source("HUSKSYNC_DATA_APPLY")
                 .summary("HuskSync inventory data apply")
                 .build();
         String json = JsonlSerializer.toJson(record, ZoneOffset.UTC);
-        assertTrue(json.contains("\"schemaVersion\":2"));
+        assertTrue(json.contains("\"schemaVersion\":3"));
         assertTrue(json.contains("\"type\":\"HUSKSYNC_DATA_APPLY\""));
         assertTrue(json.contains("\"riskScore\":0"));
         assertFalse(json.contains("incidentId"));

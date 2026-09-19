@@ -69,12 +69,16 @@ public final class IllegalItemScanner {
     }
 
     public List<RiskSignal> scanPlayer(Player player, UUID correlationId, int maxDepth) {
-        return scanPlayer(player, correlationId, maxDepth, null);
+        return observePlayer(player, correlationId, maxDepth, null).signals();
     }
 
     public List<RiskSignal> scanPlayer(Player player, UUID correlationId, int maxDepth, PlayerIncidentTracker incidents) {
+        return observePlayer(player, correlationId, maxDepth, incidents).signals();
+    }
+
+    public ScanObserveResult observePlayer(Player player, UUID correlationId, int maxDepth, PlayerIncidentTracker incidents) {
         if (!scannerSettings.enabled()) {
-            return List.of();
+            return ScanObserveResult.empty();
         }
         Instant now = Instant.now();
         UUID playerId = player.getUniqueId();
@@ -83,7 +87,7 @@ public final class IllegalItemScanner {
         scanContents(inventory.getStorageContents(), found, maxDepth);
         scanContents(inventory.getArmorContents(), found, maxDepth);
         scanContents(inventory.getExtraContents(), found, maxDepth);
-        return observer.observe(playerId, found, correlationId, now, incidents);
+        return observer.observeDetailed(playerId, found, correlationId, now, incidents);
     }
 
     /**

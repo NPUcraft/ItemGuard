@@ -42,26 +42,83 @@ public final class ScannerFindingObserver {
             Instant now,
             PlayerIncidentTracker incidents
     ) {
+        return observeDetailed(playerId, found, correlationId, now, incidents).signals();
+    }
+
+    public ScanObserveResult observeDetailed(
+            UUID playerId,
+            List<ScanFinding> found,
+            UUID correlationId,
+            Instant now,
+            PlayerIncidentTracker incidents
+    ) {
         findings.beginScan(playerId);
         List<RiskSignal> signals = new ArrayList<>();
+        List<ScannerFindingLog> logs = new ArrayList<>();
         int slot = 0;
         for (ScanFinding finding : found) {
             ScannerFindingTracker.ObserveResult observed = findings.observe(playerId, finding, slot++, now);
-            if (!observed.newRiskEvidence()) {
+            if (observed.state() == null) {
                 continue;
             }
-            if (finding.classification() == ScanClassification.INFO
-                    || finding.classification() == ScanClassification.CUSTOM) {
-                continue;
+            boolean score = observed.newRiskEvidence()
+                    && finding.classification() != ScanClassification.INFO
+                    && finding.classification() != ScanClassification.CUSTOM
+                    && (riskSettings.score(finding.signalType()) > 0
+                    || finding.classification() == ScanClassification.INVALID);
+            int applied = score ? riskSettings.score(finding.signalType()) : 0;
+            if (finding.classification() == ScanClassification.INVALID && score) {
+                applied = Math.max(applied, riskSettings.score(finding.signalType()));
             }
-            if (riskSettings.score(finding.signalType()) <= 0
-                    && finding.classification() != ScanClassification.INVALID) {
-                continue;
+            logs.add(toLog(playerId, finding, observed, correlationId, applied));
+            if (score) {
+                signals.add(toSignal(playerId, finding, correlationId));
             }
-            signals.add(toSignal(playerId, finding, correlationId));
         }
-        findings.finishScan(playerId, now, incidents);
-        return signals;
+        for (ScannerFindingTracker.FindingState resolved : findings.finishScan(playerId, now, incidents)) {
+            logs.add(new ScannerFindingLog(
+                    now,
+                    playerId,
+                    correlationId,
+                    resolved.key(),
+                    FindingLifecycle.RESOLVED,
+                    resolved.ruleId(),
+                    resolved.triggerReason().isBlank() ? "resolved" : resolved.triggerReason(),
+                    resolved.material(),
+                    0,
+                    resolved.type(),
+                    ScanClassification.INFO,
+                    com.npucraft.itemguard.risk.model.Severity.INFO,
+                    0,
+                    null
+            ));
+        }
+        return new ScanObserveResult(signals, logs);
+    }
+
+    private static ScannerFindingLog toLog(
+            UUID playerId,
+            ScanFinding finding,
+            ScannerFindingTracker.ObserveResult observed,
+            UUID correlationId,
+            int riskApplied
+    ) {
+        return new ScannerFindingLog(
+                observed.state().lastSeen(),
+                playerId,
+                correlationId,
+                observed.state().key(),
+                observed.lifecycle(),
+                finding.ruleId(),
+                ScannerFindingLog.boundedReason(finding.description()),
+                finding.material(),
+                finding.amount(),
+                finding.signalType(),
+                finding.classification(),
+                finding.severity(),
+                riskApplied,
+                finding.signature()
+        );
     }
 
     private RiskSignal toSignal(UUID playerId, ScanFinding finding, UUID correlationId) {

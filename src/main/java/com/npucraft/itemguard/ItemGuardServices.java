@@ -20,6 +20,7 @@ import com.npucraft.itemguard.listener.InventoryInteractionListener;
 import com.npucraft.itemguard.listener.InventorySlotChangeListener;
 import com.npucraft.itemguard.listener.PickupDropListener;
 import com.npucraft.itemguard.listener.PlayerSessionListener;
+import com.npucraft.itemguard.listener.VanillaBucketListener;
 import com.npucraft.itemguard.log.ForensicLogPublisher;
 import com.npucraft.itemguard.log.ForensicLogService;
 import com.npucraft.itemguard.log.ForensicLogSink;
@@ -138,6 +139,7 @@ public final class ItemGuardServices {
                 }
         ), plugin);
         Bukkit.getPluginManager().registerEvents(new PickupDropListener(expectedFlows, scheduler, plugin.getLogger()), plugin);
+        Bukkit.getPluginManager().registerEvents(new VanillaBucketListener(expectedFlows, scheduler, plugin.getLogger()), plugin);
         Bukkit.getPluginManager().registerEvents(new InventoryInteractionListener(expectedFlows, scheduler, sessions, plugin.getLogger()), plugin);
         Bukkit.getPluginManager().registerEvents(new CraftingListener(expectedFlows, scheduler, plugin.getLogger()), plugin);
         Bukkit.getPluginManager().registerEvents(new DeathListener(reconciliation, scheduler, plugin.getLogger()), plugin);
